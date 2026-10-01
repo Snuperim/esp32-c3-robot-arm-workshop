@@ -1,8 +1,8 @@
-# ESP32-C3 Robot Arm Workshop
+# ESP32-C3 Robot Arm Workshop!
 
-An Arduino/PlatformIO project for teaching how to control a four-servo robot arm with an ESP32-C3. The project can run in Wokwi before participants connect real hardware.
+An Arduino/PlatformIO project for teaching how to control a four-servo robot arm with an ESP32-C3. The idea for this workshop is that participants can run simulation of the ciruitry in Wokwi directly in VScode before we wire and mount the real hardware. 
 
-The arm supports a home position, an individual servo test, and a complete pick-and-place sequence. Commands are sent through a 115200-baud serial terminal.
+The arm currently supports a home position, an individual servo test, and a complete pick-and-place sequence. Commands to the servos are sent through a 115200-baud serial terminal.
 
 > **Hardware safety:** Do not power four servos from the ESP32 board's 5 V pin on a physical robot. Use a regulated external 5 V supply sized for the combined stall current, and connect the supply ground to ESP32 ground. Calibrate every joint before running the automatic sequence.
 
@@ -15,9 +15,9 @@ The arm supports a home position, an individual servo test, and a complete pick-
 | Elbow | 5 | 30–150° |
 | Gripper | 6 | 20–90° |
 
-The ranges are conservative starting values. Mechanical limits vary between robot arms and must be measured on the real assembly.
+The ranges are conservative starting values are dependent on the individual hardware. Mechanical limits vary between robot arms and must be measured on the real assembly and updated + tested in this simulation.
 
-## Wokwi simulation quick start
+## Wokwi simulation quick start guide
 
 ### 1. Install the required VS Code extensions
 
@@ -26,7 +26,7 @@ Install:
 - **PlatformIO IDE**
 - **Wokwi for VS Code**
 
-VS Code should recommend both extensions automatically when this repository is opened. Activate/sign in to the Wokwi extension if prompted.
+VS Code should recommend both extensions automatically when this repository is opened. Activate/sign in to the Wokwi extension in a browser if prompted.
 
 ### 2. Clone and open the repository
 

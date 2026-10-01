@@ -1,10 +1,10 @@
 # ESP32-C3 Robot Arm Workshop!
 
-An Arduino/PlatformIO project for teaching how to control a four-servo robot arm with an ESP32-C3. The idea for this workshop is that participants can run simulation of the ciruitry in Wokwi directly in VScode before we wire and mount the real hardware. 
+An Arduino/PlatformIO project for teaching how to control a four-servo robot arm with an ESP32-C3. The idea for this workshop is that participants can run a simulation of the circuitry in Wokwi directly in VS Code before we wire and mount the real hardware. 
 
 The arm currently supports a home position, an individual servo test, and a complete pick-and-place sequence. Commands to the servos are sent through a 115200-baud serial terminal.
 
-> **Hardware safety:** Do not power four servos from the ESP32 board's 5 V pin on a physical robot. Use a regulated external 5 V supply sized for the combined stall current, and connect the supply ground to ESP32 ground. Calibrate every joint before running the automatic sequence.
+> **Hardware safety:** Do not power four servos from the ESP32 board's 5 V pin on a physical robot. Use a regulated external 5 V supply sized for the combined stall current, and connect the supply ground to the ESP32 ground. Calibrate every joint before running the automatic sequence.
 
 ## Hardware and pin map
 
@@ -15,7 +15,7 @@ The arm currently supports a home position, an individual servo test, and a comp
 | Elbow | 5 | 30–150° |
 | Gripper | 6 | 20–90° |
 
-The ranges are conservative starting values are dependent on the individual hardware. Mechanical limits vary between robot arms and must be measured on the real assembly and updated + tested in this simulation.
+The ranges are conservative starting values and are dependent on the individual hardware. Mechanical limits vary between robot arms and must be measured on the real assembly and updated + tested in this simulation.
 
 ## Wokwi simulation quick start guide
 
@@ -78,7 +78,7 @@ The ESP32-C3 and four virtual servos should appear.
 
 ### 5. Use the built-in Wokwi terminal
 
-The Wokwi terminal is the recommended workshop interface. You do **not** need a physical COM port or PlatformIO Serial Monitor for the normal simulation workflow.
+The Wokwi terminal is the recommended interface for workshops. You do **not** need a physical COM port or PlatformIO Serial Monitor for the normal simulation workflow.
 
 You should see:
 
@@ -140,7 +140,7 @@ Do not use the RFC2217 monitor configuration for the physical robot.
 
 ## Simulation troubleshooting
 
-### `firmware.bin not found`
+### `firmware.bin not found.`
 
 Build the `wokwi` environment first and confirm that this exists:
 
@@ -148,7 +148,7 @@ Build the `wokwi` environment first and confirm that this exists:
 .pio/build/wokwi/firmware.bin
 ```
 
-### Wokwi runs but the terminal is empty
+### Wokwi runs, but the terminal is empty
 
 - Confirm the simulator is actually running rather than paused.
 - Type `?` and press Enter.

@@ -17,26 +17,85 @@ The arm supports a home position, an individual servo test, and a complete pick-
 
 The ranges are conservative starting values. Mechanical limits vary between robot arms and must be measured on the real assembly.
 
-## Simulation quick start
+## Wokwi simulation quick start
 
-Install these VS Code extensions:
+### 1. Install the required VS Code extensions
 
-- PlatformIO IDE
-- Wokwi for VS Code
+Install:
 
-Then:
+- **PlatformIO IDE**
+- **Wokwi for VS Code**
 
-1. Clone or download this repository and open its root folder in VS Code.
-2. Run **PlatformIO: Build**.
-3. Open `diagram.json` and run **Wokwi: Start Simulator**.
-4. Keep the Wokwi simulator tab visible so the simulation continues running.
-5. Open PlatformIO Serial Monitor after Wokwi starts.
-6. If you want to see the boot messages, restart the simulation while the monitor is connected.
-7. Type `t` and press Enter to test the four servos.
+VS Code should recommend both extensions automatically when this repository is opened. Activate/sign in to the Wokwi extension if prompted.
 
-The built-in Wokwi terminal can also send the same commands.
+### 2. Clone and open the repository
 
-## Commands
+Clone or download this repository, then open the **repository root folder** in VS Code.
+
+The folder you open should contain:
+
+```text
+platformio.ini
+diagram.json
+wokwi.toml
+src/
+```
+
+Do not open only the `src` folder.
+
+### 3. Build the simulation firmware
+
+The default PlatformIO environment is `wokwi`, so the normal **PlatformIO: Build** command builds the simulator firmware.
+
+You can also use:
+
+```text
+PlatformIO → Project Tasks → wokwi → Build
+```
+
+Wait for:
+
+```text
+SUCCESS
+```
+
+After a successful build, this file should exist:
+
+```text
+.pio/build/wokwi/firmware.bin
+```
+
+Wokwi cannot start until the firmware has been built.
+
+### 4. Start Wokwi
+
+Open `diagram.json`, then either:
+
+- press the green **Play** button in the Wokwi diagram view, or
+- press `Ctrl+Shift+P` and run **Wokwi: Start Simulator**.
+
+The ESP32-C3 and four virtual servos should appear.
+
+### 5. Use the built-in Wokwi terminal
+
+The Wokwi terminal is the recommended workshop interface. You do **not** need a physical COM port or PlatformIO Serial Monitor for the normal simulation workflow.
+
+You should see:
+
+```text
+Robot arm ready!
+
+===========================
+ ROBOT ARM CONTROL
+===========================
+h = HOME
+t = Test servos
+p = Pick and place
+? = Show this menu
+===========================
+```
+
+Type a command and press Enter:
 
 | Command | Action |
 | --- | --- |
@@ -45,31 +104,82 @@ The built-in Wokwi terminal can also send the same commands.
 | `p` | Run the complete pick-and-place sequence |
 | `?` | Print the command menu |
 
-Commands are case-insensitive except for `?`.
+Start with `t`.
 
-## Serial connection used by the simulator
+### 6. Edit and rerun
 
-```mermaid
-flowchart LR
-    A[PlatformIO Serial Monitor] <-->|RFC2217 port 4000| B[Wokwi serial monitor]
-    B <-->|TX and RX| C[ESP32-C3 UART0]
+The main program is `src/main.cpp`.
+
+After changing the code:
+
+1. Stop the Wokwi simulation.
+2. Run **PlatformIO: Build** again.
+3. Restart Wokwi.
+
+> Wokwi runs the **compiled firmware**, not `main.cpp` directly. If you change the source code without rebuilding, the simulator will still run the previous firmware.
+
+## Optional: PlatformIO Serial Monitor with Wokwi
+
+Wokwi already includes an interactive terminal, so this section is not required for the workshop.
+
+For debugging, the simulation also exposes its UART through RFC2217 on port 4000. Start Wokwi first, then run **PlatformIO: Serial Monitor** using the `wokwi` environment.
+
+The monitor should connect to:
+
+```text
+rfc2217://localhost:4000
 ```
 
-Three settings make this work:
+The serial path is configured in three places:
 
 - `wokwi.toml` exposes Wokwi's simulated UART on RFC2217 port 4000.
-- `platformio.ini` tells PlatformIO to use `rfc2217://localhost:4000`.
-- `diagram.json` explicitly crosses ESP32 TX/RX with `$serialMonitor` RX/TX.
+- the `wokwi` environment in `platformio.ini` points PlatformIO at `rfc2217://localhost:4000`.
+- `diagram.json` crosses ESP32 TX/RX with `$serialMonitor` RX/TX.
 
-See [Troubleshooting](docs/TROUBLESHOOTING.md) if the monitor connects but shows no firmware output.
+Do not use the RFC2217 monitor configuration for the physical robot.
+
+## Simulation troubleshooting
+
+### `firmware.bin not found`
+
+Build the `wokwi` environment first and confirm that this exists:
+
+```text
+.pio/build/wokwi/firmware.bin
+```
+
+### Wokwi runs but the terminal is empty
+
+- Confirm the simulator is actually running rather than paused.
+- Type `?` and press Enter.
+- If needed, stop and restart the simulator.
+
+### Code changes do not appear
+
+Stop Wokwi, rebuild with PlatformIO, then restart Wokwi.
+
+### Servos do not move
+
+Run `t`. If the terminal prints the test messages but the virtual servos do not move, check `diagram.json` and verify:
+
+```text
+GPIO3 → Base
+GPIO4 → Shoulder
+GPIO5 → Elbow
+GPIO6 → Gripper
+```
+
+For more detail, see [Troubleshooting](docs/TROUBLESHOOTING.md).
 
 ## Physical robot setup
+
+The repository has a separate PlatformIO environment named `physical` for the real ESP32-C3-DevKitC-02 board.
 
 1. Disconnect servo power while checking all signal and ground wiring.
 2. Connect each servo signal to the GPIO in the pin map.
 3. Connect the ESP32 ground and external servo-supply ground together.
 4. Remove servo horns or unload the joints for the first power-on where practical.
-5. Build and upload the firmware with PlatformIO.
+5. In PlatformIO, select **Project Tasks → physical → Build/Upload**.
 6. Run `t` and verify one joint at a time.
 7. Adjust the limits and poses in `src/main.cpp` before running `p`.
 
@@ -86,13 +196,13 @@ The movement code uses blocking delays to keep it approachable for a workshop. S
 | Path | Purpose |
 | --- | --- |
 | `src/main.cpp` | Robot poses, servo control, motion, and serial commands |
-| `platformio.ini` | Board, dependency, and PlatformIO monitor configuration |
+| `platformio.ini` | Separate Wokwi and physical-board PlatformIO environments |
 | `diagram.json` | Wokwi ESP32-C3 and four-servo circuit |
-| `wokwi.toml` | Wokwi firmware paths and serial forwarding |
+| `wokwi.toml` | Wokwi firmware paths and optional serial forwarding |
 | `docs/WORKSHOP_GUIDE.md` | Suggested facilitator plan and calibration activity |
 | `docs/TROUBLESHOOTING.md` | Build, simulation, serial, and hardware fixes |
-| `.github/workflows/build.yml` | Automatic PlatformIO build for pushes and pull requests |
+| `.github/workflows/build.yml` | Automatic PlatformIO builds for pushes and pull requests |
 
 ## Reproducible builds
 
-The Espressif platform and ESP32Servo library versions are pinned in `platformio.ini`. GitHub Actions builds the firmware on every push and pull request, helping catch dependency or compilation problems before a workshop.
+The Espressif platform and ESP32Servo library versions are pinned in `platformio.ini`. GitHub Actions builds both the Wokwi and physical environments on every push and pull request, helping catch dependency or compilation problems before a workshop.

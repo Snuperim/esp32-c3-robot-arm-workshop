@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "author": "Robot Arm Workshop",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-c3-devkitm-1",
+      "id": "esp",
+      "top": 0,
+      "left": -120,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "baseServo",
+      "top": -170,
+      "left": 220,
+      "attrs": { "horn": "double" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "shoulderServo",
+      "top": -60,
+      "left": 220,
+      "attrs": { "horn": "double" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "elbowServo",
+      "top": 50,
+      "left": 220,
+      "attrs": { "horn": "double" }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "gripperServo",
+      "top": 160,
+      "left": 220,
+      "attrs": { "horn": "single" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "esp:3", "baseServo:PWM", "green", [] ],
+    [ "esp:4", "shoulderServo:PWM", "blue", [] ],
+    [ "esp:5", "elbowServo:PWM", "orange", [] ],
+    [ "esp:6", "gripperServo:PWM", "purple", [] ],
+
+    [ "esp:5V.1", "baseServo:V+", "red", [] ],
+    [ "esp:5V.1", "shoulderServo:V+", "red", [] ],
+    [ "esp:5V.1", "elbowServo:V+", "red", [] ],
+    [ "esp:5V.1", "gripperServo:V+", "red", [] ],
+
+    [ "esp:GND.9", "baseServo:GND", "black", [] ],
+    [ "esp:GND.9", "shoulderServo:GND", "black", [] ],
+    [ "esp:GND.9", "elbowServo:GND", "black", [] ],
+    [ "esp:GND.9", "gripperServo:GND", "black", [] ]
+  ],
+  "dependencies": {},
+
+  "serialMonitor": {
+    "display": "terminal",
+    "newline": "lf",
+    "convertEol": true
+  }
+}

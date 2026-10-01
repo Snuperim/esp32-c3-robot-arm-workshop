@@ -1,5 +1,8 @@
 [wokwi]
 version = 1
-firmware = '.pio/build/esp32-c3-devkitc-02/firmware.bin'
-elf = '.pio/build/esp32-c3-devkitc-02/firmware.elf'
+firmware = '.pio/build/wokwi/firmware.bin'
+elf = '.pio/build/wokwi/firmware.elf'
+
+# Optional: lets PlatformIO Serial Monitor connect to the simulated UART.
+# The normal workshop workflow uses Wokwi's built-in terminal instead.
 rfc2217ServerPort = 4000

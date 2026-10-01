@@ -1,37 +1,98 @@
 # Troubleshooting
 
-## What was fixed during initial setup
+## Recommended simulation workflow
 
-The firmware built correctly, but PlatformIO initially had no serial path to the simulated ESP32-C3. The complete fix required three layers:
+For workshop participants, use Wokwi's **built-in terminal** first:
 
-1. Wokwi serial forwarding was enabled with `rfc2217ServerPort = 4000` in `wokwi.toml`.
-2. PlatformIO was pointed at `rfc2217://localhost:4000` in `platformio.ini`.
-3. The ESP32-C3 UART was explicitly connected in `diagram.json`:
+1. Run **PlatformIO: Build**.
+2. Confirm `.pio/build/wokwi/firmware.bin` exists.
+3. Open `diagram.json`.
+4. Start Wokwi.
+5. Use the terminal inside the Wokwi simulator.
+6. Type `?` or `t` and press Enter.
 
-   ```json
-   [ "esp:TX", "$serialMonitor:RX", "", [] ],
-   [ "esp:RX", "$serialMonitor:TX", "", [] ]
-   ```
+A physical COM port is not required for Wokwi simulation.
 
-TX and RX are crossed because one side's transmitter connects to the other side's receiver. Local echo was enabled so typed characters are visible, and `send_on_enter` makes PlatformIO send a completed command when Enter is pressed.
+## `firmware.bin` not found
 
-Changes to `diagram.json` do not update an already-running simulation reliably. Stop Wokwi, close and reopen the diagram, and start the simulator again after changing its wiring.
+The default PlatformIO environment is `wokwi`. Build the project and confirm:
 
-## PlatformIO monitor connects but prints nothing
+```text
+.pio/build/wokwi/firmware.bin
+```
 
-1. Confirm that **PlatformIO: Build** succeeds.
-2. Stop the current simulation and serial monitor.
-3. Reopen `diagram.json` and start Wokwi.
-4. Keep the Wokwi tab visible; the simulator may pause when hidden.
-5. Open PlatformIO Serial Monitor only after Wokwi is running.
-6. Restart the simulation while the monitor is connected to capture startup output.
-7. Type `?` and press Enter.
+If the file is missing, check that `platformio.ini` still contains the `[env:wokwi]` environment and that `wokwi.toml` points to `.pio/build/wokwi/firmware.bin`.
 
-The monitor header should show `rfc2217://localhost:4000` and 115200 baud.
+## Wokwi starts with old firmware
 
-## Typed text appears but commands do nothing
+Wokwi loads the compiled binary named in `wokwi.toml` when the simulation starts.
 
-Visible input can come from local echo alone. Check that both `$serialMonitor` wiring entries are present in `diagram.json`, then fully restart Wokwi. Also confirm that the simulator is running rather than paused.
+1. Stop the simulator.
+2. Run **PlatformIO: Build**.
+3. Start Wokwi again.
+
+Changing `src/main.cpp` without rebuilding does not update the simulated firmware.
+
+## Wokwi terminal is empty
+
+1. Confirm **PlatformIO: Build** succeeds.
+2. Confirm the simulator is running rather than paused.
+3. Type `?` and press Enter.
+4. Stop and restart Wokwi if necessary.
+5. Reopen `diagram.json` if you recently changed the virtual wiring.
+
+The terminal is configured in `diagram.json` with `"display": "terminal"`.
+
+## Servos do not move in Wokwi
+
+Run `t` and check whether servo-test messages appear in the terminal.
+
+If messages appear but the virtual servos do not move, verify the signal wiring in `diagram.json`:
+
+```text
+GPIO3 → Base
+GPIO4 → Shoulder
+GPIO5 → Elbow
+GPIO6 → Gripper
+```
+
+Also confirm each virtual servo has a 5 V and GND connection.
+
+## Optional PlatformIO Serial Monitor
+
+The external PlatformIO Serial Monitor is optional. The built-in Wokwi terminal is simpler for participants.
+
+If you do want the PlatformIO monitor, the simulation must be running first. The complete serial-forwarding path is:
+
+1. `wokwi.toml` enables `rfc2217ServerPort = 4000`.
+2. the `wokwi` environment in `platformio.ini` uses `monitor_port = rfc2217://localhost:4000`.
+3. `diagram.json` connects the simulated ESP32 UART:
+
+```json
+[ "esp:TX", "$serialMonitor:RX", "", [] ],
+[ "esp:RX", "$serialMonitor:TX", "", [] ]
+```
+
+TX and RX are crossed because one side's transmitter connects to the other side's receiver.
+
+After changing `diagram.json`, stop Wokwi and start the simulation again.
+
+## PlatformIO Serial Monitor asks for a COM port
+
+If you are trying to simulate in Wokwi, stop the monitor and start Wokwi instead. The recommended simulation workflow does not use a COM port.
+
+If you are working with the **physical** robot, select the `physical` PlatformIO environment and then use the COM port assigned to the connected ESP32-C3.
+
+## Typed text appears in PlatformIO monitor but commands do nothing
+
+Visible text may be local echo rather than data reaching the simulated ESP32.
+
+Check that:
+
+- Wokwi is running;
+- the monitor header shows `rfc2217://localhost:4000`;
+- both `$serialMonitor` wiring entries are present in `diagram.json`; and
+- you restarted Wokwi after changing the diagram.
 
 ## Port 4000 is unavailable
 
@@ -47,9 +108,16 @@ rfc2217ServerPort = 4001
 monitor_port = rfc2217://localhost:4001
 ```
 
-## Wokwi starts with old firmware
+## Physical upload uses the wrong environment
 
-Stop the simulator, run **PlatformIO: Build**, and start it again. Wokwi loads the binary named in `wokwi.toml` when the simulation starts.
+The repository separates simulation and hardware:
+
+```text
+wokwi    → ESP32-C3-DevKitM-1 virtual board
+physical → ESP32-C3-DevKitC-02 real board
+```
+
+For a real board, use **PlatformIO → Project Tasks → physical → Upload**.
 
 ## Physical servos jitter or reset the ESP32
 

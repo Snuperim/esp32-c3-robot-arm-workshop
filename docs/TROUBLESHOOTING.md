@@ -1,5 +1,20 @@
 # Troubleshooting
 
+## Webots quick checks
+
+Use **Terminal → Run Task → Webots: Open robot arm** in VS Code. The included launcher opens the correct world in real-time mode and removes a broken inherited `QT_OPENGL` value for that process.
+
+If Webots opens but the model is not visible:
+
+1. Select **Simulation → Rendering** if rendering is disabled.
+2. Select **View → Restore Viewpoint**.
+3. Select **Tools → Restore Layout**, then **Tools → 3D View** if the viewport is missing.
+4. Confirm the Scene Tree contains `workshop robot arm`.
+
+The Webots console is output-only. To control the arm, make sure **Simulation → Real-time** is active, click the 3D view, and press `T`, `H`, `P`, or `?`.
+
+If PowerShell shows a `>>` prompt after a manual launch command, press `Ctrl+C`: the command has an unmatched quotation mark. Use `scripts/start-webots.ps1` instead.
+
 ## Recommended simulation workflow
 
 For workshop participants, use Wokwi's **built-in terminal** first:

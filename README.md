@@ -1,8 +1,31 @@
-# ESP32-C3 Robot Arm Workshop!
+# ESP32-C3 Robot Arm Workshop
 
-An Arduino/PlatformIO project for teaching how to control a four-servo robot arm with an ESP32-C3. The idea for this workshop is that participants can run a simulation of the circuitry in Wokwi directly in VS Code before we wire and mount the real hardware. 
+An Arduino/PlatformIO workshop project for controlling a four-servo robot arm with an ESP32-C3. It includes a complete 3D arm in Webots, an ESP32 circuit simulation in Wokwi, and a separate firmware target for the physical robot.
 
 The arm currently supports a home position, an individual servo test, and a complete pick-and-place sequence. Commands to the servos are sent through a 115200-baud serial terminal.
+
+## Start here
+
+For installation, Webots controls, Wokwi setup, physical-arm safety, troubleshooting, and GitHub push commands, follow the **[complete setup guide](docs/SETUP_GUIDE.md)**.
+
+### Webots 3D simulation
+
+In VS Code, select **Terminal → Run Task → Webots: Open robot arm**. The included launcher opens the correct world in real-time mode and avoids the invalid `QT_OPENGL` setting that can cause a blank viewport.
+
+Click inside the Webots 3D view and press:
+
+| Key | Action |
+| --- | --- |
+| `H` | Return home |
+| `T` | Test every joint |
+| `P` | Run pick-and-place |
+| `?` | Print the control menu |
+
+The Webots console is output-only. Keyboard commands are received by the 3D view while the simulation is running.
+
+### Wokwi circuit simulation
+
+Run **PlatformIO: Build**, open `diagram.json`, and start **Wokwi: Start Simulator**. Type `h`, `t`, `p`, or `?` into Wokwi's built-in terminal and press Enter.
 
 > **Hardware safety:** Do not power four servos from the ESP32 board's 5 V pin on a physical robot. Use a regulated external 5 V supply sized for the combined stall current, and connect the supply ground to the ESP32 ground. Calibrate every joint before running the automatic sequence.
 
@@ -199,6 +222,10 @@ The movement code uses blocking delays to keep it approachable for a workshop. S
 | `platformio.ini` | Separate Wokwi and physical-board PlatformIO environments |
 | `diagram.json` | Wokwi ESP32-C3 and four-servo circuit |
 | `wokwi.toml` | Wokwi firmware paths and optional serial forwarding |
+| `webots/worlds/robot_arm.wbt` | Complete 3D robot-arm world |
+| `webots/controllers/arm_controller/arm_controller.py` | Webots keyboard and motion controller |
+| `scripts/start-webots.ps1` | Reliable Windows Webots launcher |
+| `docs/SETUP_GUIDE.md` | Complete installation, simulation, and GitHub guide |
 | `docs/WORKSHOP_GUIDE.md` | Suggested facilitator plan and calibration activity |
 | `docs/TROUBLESHOOTING.md` | Build, simulation, serial, and hardware fixes |
 | `.github/workflows/build.yml` | Automatic PlatformIO builds for pushes and pull requests |

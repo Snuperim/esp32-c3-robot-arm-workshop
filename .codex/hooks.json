@@ -1,0 +1,46 @@
+{
+  "description": "RobotArmC3 automation and safety checks",
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .codex/hooks/permission_request.py",
+            "commandWindows": "python .codex/hooks/permission_request.py",
+            "timeout": 5,
+            "statusMessage": "Reviewing robot-arm command"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^apply_patch$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .codex/hooks/validate_edit.py",
+            "commandWindows": "python .codex/hooks/validate_edit.py",
+            "timeout": 5,
+            "statusMessage": "Queuing targeted validation"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .codex/hooks/validate_stop.py",
+            "commandWindows": "python .codex/hooks/validate_stop.py",
+            "timeout": 240,
+            "statusMessage": "Checking RobotArmC3 completion criteria"
+          }
+        ]
+      }
+    ]
+  }
+}

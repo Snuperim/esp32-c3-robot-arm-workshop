@@ -1,0 +1,304 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.31257561648347976 -0.11233109374025271 0.9432275490882841 3.7952226942998757
+  position 1.7852757369073537 1.8064659783967512 1.9688363349595577
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Solid {
+  translation 0 0 -0.025
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.45 0.45 0.45
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 1 1 0.05
+      }
+    }
+  ]
+  name "work surface"
+  boundingObject Box {
+    size 1 1 0.05
+  }
+  locked TRUE
+}
+Robot {
+  children [
+    Pose {
+      translation 0 0 0.04
+      children [
+        Shape {
+          appearance DEF BASE_APPEARANCE PBRAppearance {
+            baseColor 0.12 0.12 0.15
+            roughness 0.45
+            metalness 0.2
+          }
+          geometry Cylinder {
+            height 0.08
+            radius 0.08
+          }
+        }
+      ]
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        position -1.6329688712346524e-08
+        axis 0 0 1
+        anchor 0 0 0.08
+        minStop -1.22173
+        maxStop 1.22173
+        dampingConstant 0.1
+      }
+      device [
+        RotationalMotor {
+          name "base_motor"
+          maxVelocity 2
+          minPosition -1.22173
+          maxPosition 1.22173
+          maxTorque 3
+        }
+        PositionSensor {
+          name "base_sensor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 0 0.08
+        children [
+          Shape {
+            appearance USE BASE_APPEARANCE
+            geometry Cylinder {
+              height 0.06
+              radius 0.06
+            }
+          }
+          HingeJoint {
+            jointParameters HingeJointParameters {
+              position 1.1143489366037982e-08
+              axis 0 1 0
+              anchor 0 0 0.04
+              minStop -1.0472
+              maxStop 1.0472
+              dampingConstant 0.1
+            }
+            device [
+              RotationalMotor {
+                name "shoulder_motor"
+                maxVelocity 2
+                minPosition -1.0472
+                maxPosition 1.0472
+                maxTorque 3
+              }
+              PositionSensor {
+                name "shoulder_sensor"
+              }
+            ]
+            endPoint Solid {
+              translation 0 0 0.04
+              rotation 0 1 0 0
+              children [
+                Pose {
+                  translation 0 0 0.1
+                  children [
+                    Shape {
+                      appearance DEF ARM_APPEARANCE PBRAppearance {
+                        baseColor 0.15 0.4 0.85
+                        roughness 0.5
+                        metalness 0
+                      }
+                      geometry Box {
+                        size 0.05 0.05 0.2
+                      }
+                    }
+                  ]
+                }
+                HingeJoint {
+                  jointParameters HingeJointParameters {
+                    position 1.012445458047969e-08
+                    axis 0 1 0
+                    anchor 0 0 0.2
+                    minStop -1.0472
+                    maxStop 1.0472
+                    dampingConstant 0.08
+                  }
+                  device [
+                    RotationalMotor {
+                      name "elbow_motor"
+                      maxVelocity 2
+                      minPosition -1.0472
+                      maxPosition 1.0472
+                      maxTorque 2
+                    }
+                    PositionSensor {
+                      name "elbow_sensor"
+                    }
+                  ]
+                  endPoint Solid {
+                    translation 0 0 0.2
+                    rotation 0 1 0 0
+                    children [
+                      Pose {
+                        translation 0 0 0.09
+                        children [
+                          Shape {
+                            appearance USE ARM_APPEARANCE
+                            geometry Box {
+                              size 0.045 0.045 0.18
+                            }
+                          }
+                        ]
+                      }
+                      Pose {
+                        translation -0.03 0 0.22
+                        children [
+                          Shape {
+                            appearance DEF GRIPPER_APPEARANCE PBRAppearance {
+                              baseColor 0.85 0.25 0.1
+                              roughness 0.5
+                              metalness 0
+                            }
+                            geometry Box {
+                              size 0.025 0.04 0.08
+                            }
+                          }
+                        ]
+                      }
+                      HingeJoint {
+                        jointParameters HingeJointParameters {
+                          position -0.08726644329580058
+                          axis 0 1 0
+                          anchor 0 0 0.18
+                          minStop -0.610865
+                          dampingConstant 0.04
+                        }
+                        device [
+                          RotationalMotor {
+                            name "gripper_motor"
+                            maxVelocity 3
+                            minPosition -0.610865
+                            maxTorque 0.5
+                          }
+                          PositionSensor {
+                            name "gripper_sensor"
+                          }
+                        ]
+                        endPoint Solid {
+                          translation 0 0 0.18
+                          rotation 0 -1 0 0.08726644329579888
+                          children [
+                            Pose {
+                              translation 0.03 0 0.04
+                              children [
+                                Shape {
+                                  appearance USE GRIPPER_APPEARANCE
+                                  geometry Box {
+                                    size 0.025 0.04 0.08
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                          name "moving gripper finger"
+                          boundingObject Pose {
+                            translation 0.03 0 0.04
+                            children [
+                              Box {
+                                size 0.025 0.04 0.08
+                              }
+                            ]
+                          }
+                          physics Physics {
+                            density -1
+                            mass 0.08
+                          }
+                          linearVelocity -3.09678272225948e-08 -1.1100343502836551e-07 -1.5706614703593932e-08
+                          angularVelocity 4.639187852676721e-07 -1.882354461916285e-08 -1.9620335512872113e-07
+                        }
+                      }
+                    ]
+                    name "forearm"
+                    boundingObject Group {
+                      children [
+                        Pose {
+                          translation 0 0 0.09
+                          children [
+                            Box {
+                              size 0.045 0.045 0.18
+                            }
+                          ]
+                        }
+                        Pose {
+                          translation -0.03 0 0.22
+                          children [
+                            Box {
+                              size 0.025 0.04 0.08
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                    physics Physics {
+                      density -1
+                      mass 0.2
+                    }
+                    linearVelocity -2.7578330390466653e-09 -5.0782542142812334e-08 -3.1652102450152596e-09
+                    angularVelocity 8.468881948898712e-08 -3.9625092161998964e-08 -1.6649222682662817e-07
+                  }
+                }
+              ]
+              name "upper arm"
+              boundingObject Pose {
+                translation 0 0 0.1
+                children [
+                  Box {
+                    size 0.05 0.05 0.2
+                  }
+                ]
+              }
+              physics Physics {
+                density -1
+                mass 0.3
+              }
+              linearVelocity -2.360623855548761e-09 -1.6628230516249772e-08 -9.370609177494771e-10
+              angularVelocity 8.458299268619404e-08 -3.963221602548893e-08 -1.6648496612059254e-07
+            }
+          }
+        ]
+        name "base turret"
+        boundingObject Cylinder {
+          height 0.06
+          radius 0.06
+        }
+        physics Physics {
+          density -1
+          mass 0.25
+        }
+        linearVelocity -1.4648942180792783e-10 9.288110123797596e-12 1.0779956483020214e-11
+        angularVelocity -4.54327491743994e-12 -2.448840605149501e-11 -1.6528425174579562e-07
+      }
+    }
+  ]
+  name "workshop robot arm"
+  boundingObject Pose {
+    translation 0 0 0.04
+    children [
+      Cylinder {
+        height 0.08
+        radius 0.08
+      }
+    ]
+  }
+  locked TRUE
+  controller "arm_controller"
+  selfCollision TRUE
+}

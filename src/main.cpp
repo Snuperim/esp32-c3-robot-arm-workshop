@@ -4,39 +4,53 @@
 // ======================================================
 // ROBOT ARM - ESP32-C3
 // Base + Shoulder + Elbow + Gripper
+//
+// Angles are servo degrees (0-180).
+// 90 = neutral: upper arm vertical, forearm horizontal.
 // ======================================================
 
-// -------------------- SERVOS ---------------------------
+// -------------------- SERVO PULSE RANGE ----------------
+// Starting conservatively with 1000-2000 us.
+// Check your own servos after wiring and change these two
+// numbers only if the servo cannot reach its full range.
 
-Servo baseServo;
-Servo shoulderServo;
-Servo elbowServo;
-Servo gripperServo;
+const int SERVO_MIN_US = 1000;
+const int SERVO_MAX_US = 2000;
 
-// -------------------- GPIO PINS ------------------------
-
-const int BASE_PIN     = 3;
-const int SHOULDER_PIN = 4;
-const int ELBOW_PIN    = 5;
-const int GRIPPER_PIN  = 6;
-
-// -------------------- SAFE LIMITS ----------------------
+// -------------------- JOINT SETTINGS -------------------
 // THESE ARE STARTING VALUES ONLY.
-//
-// Calibrate these on the real robot before using the
+// Calibrate each joint on the real robot before using the
 // automatic sequence.
+//
+//   minAngle / maxAngle : safe range for this joint
+//   invert              : true if + angle moves the joint
+//                         the wrong way for your mounting
+//   trim                : degrees added to correct a horn
+//                         that was fitted a little off
 
-const int BASE_MIN     = 20;
-const int BASE_MAX     = 160;
+enum JointId { BASE, SHOULDER, ELBOW, GRIPPER, JOINT_COUNT };
 
-const int SHOULDER_MIN = 30;
-const int SHOULDER_MAX = 150;
+struct JointConfig {
+  const char* name;
+  int pin;
+  int minAngle;
+  int maxAngle;
+  bool invert;
+  int trim;
+};
 
-const int ELBOW_MIN    = 30;
-const int ELBOW_MAX    = 150;
+const JointConfig CONFIG[JOINT_COUNT] = {
+  // name        pin  min  max  invert trim
+  { "base",      3,   20, 160, false,  0 },
+  { "shoulder",  4,   30, 150, false,  0 },
+  { "elbow",     5,   30, 150, false,  0 },
+  { "gripper",   6,   20,  90, false,  0 },
+};
 
-const int GRIPPER_MIN  = 20;
-const int GRIPPER_MAX  = 90;
+Servo servos[JOINT_COUNT];
+
+// Set to true for smoother starts and stops.
+const bool EASED_MOTION = false;
 
 // -------------------- ROBOT POSE -----------------------
 
@@ -47,126 +61,142 @@ struct Pose {
   int gripper;
 };
 
-// -------------------- CURRENT POSITION ----------------
+int getAngle(const Pose& p, int joint) {
+  switch (joint) {
+    case BASE:     return p.base;
+    case SHOULDER: return p.shoulder;
+    case ELBOW:    return p.elbow;
+    default:       return p.gripper;
+  }
+}
 
-Pose currentPose = {
-  90,   // base
-  90,   // shoulder
-  90,   // elbow
-  30    // gripper
-};
+void setAngle(Pose& p, int joint, int value) {
+  switch (joint) {
+    case BASE:     p.base = value;     break;
+    case SHOULDER: p.shoulder = value; break;
+    case ELBOW:    p.elbow = value;    break;
+    default:       p.gripper = value;  break;
+  }
+}
+
+Pose currentPose = { 90, 90, 90, 30 };
 
 // ======================================================
 // PREDEFINED ROBOT POSITIONS
+//
+// These were worked out for an object on the table about
+// 110 mm in front of the base axis (table = bottom of the
+// arm base). Regenerate them for another position with:
+//
+//   python tools/arm_poses.py --reach 140
+//
+// Always test each pose without an object first.
 // ======================================================
 
 // Neutral safe position
-const Pose HOME = {
-  90,
-  90,
-  90,
-  30
-};
+const Pose HOME = { 90, 90, 90, 30 };
 
-// Arm positioned above pickup object
-const Pose PICK_APPROACH = {
-  45,
-  95,
-  80,
-  30
-};
+// Hovering above the pickup object
+const Pose PICK_APPROACH = { 45, 97, 124, 30 };
 
-// Arm lowered toward object
-const Pose PICK = {
-  45,
-  120,
-  60,
-  30
-};
+// Lowered onto the object, gripper open
+const Pose PICK = { 45, 135, 112, 30 };
 
 // Object gripped
-const Pose GRAB = {
-  45,
-  120,
-  60,
-  75
-};
+const Pose GRAB = { 45, 135, 112, 75 };
 
-// Raise object
-const Pose LIFT = {
-  45,
-  80,
-  90,
-  75
-};
+// Raise the object
+const Pose LIFT = { 45, 97, 124, 75 };
 
-// Position above drop zone
-const Pose PLACE_APPROACH = {
-  135,
-  85,
-  90,
-  75
-};
+// Above the drop zone
+const Pose PLACE_APPROACH = { 135, 97, 124, 75 };
 
-// Lower into drop position
-const Pose PLACE = {
-  135,
-  115,
-  65,
-  75
-};
+// Lowered into the drop position
+const Pose PLACE = { 135, 135, 112, 75 };
 
-// Release object
-const Pose RELEASE = {
-  135,
-  115,
-  65,
-  30
-};
+// Release the object
+const Pose RELEASE = { 135, 135, 112, 30 };
 
 // ======================================================
 // LIMIT FUNCTION
 // ======================================================
 
 Pose constrainPose(Pose p) {
-
-  p.base =
-      constrain(p.base, BASE_MIN, BASE_MAX);
-
-  p.shoulder =
-      constrain(p.shoulder, SHOULDER_MIN, SHOULDER_MAX);
-
-  p.elbow =
-      constrain(p.elbow, ELBOW_MIN, ELBOW_MAX);
-
-  p.gripper =
-      constrain(p.gripper, GRIPPER_MIN, GRIPPER_MAX);
-
+  for (int j = 0; j < JOINT_COUNT; j++) {
+    setAngle(p, j,
+             constrain(getAngle(p, j),
+                       CONFIG[j].minAngle,
+                       CONFIG[j].maxAngle));
+  }
   return p;
 }
 
 // ======================================================
-// WRITE POSE
+// WRITE TO THE SERVOS
 // ======================================================
 
-void writePose(Pose p) {
+void writeJoint(int joint, int angle) {
+  int out = constrain(angle,
+                      CONFIG[joint].minAngle,
+                      CONFIG[joint].maxAngle);
 
+  if (CONFIG[joint].invert) {
+    out = 180 - out;
+  }
+
+  out = constrain(out + CONFIG[joint].trim, 0, 180);
+
+  servos[joint].write(out);
+}
+
+void writePose(Pose p) {
   p = constrainPose(p);
 
-  baseServo.write(p.base);
-  shoulderServo.write(p.shoulder);
-  elbowServo.write(p.elbow);
-  gripperServo.write(p.gripper);
+  for (int j = 0; j < JOINT_COUNT; j++) {
+    writeJoint(j, getAngle(p, j));
+  }
 
   currentPose = p;
 }
 
 // ======================================================
-// SMOOTH MOVEMENT
+// STOP COMMAND
+//
+// Typing x (then Enter) stops the current movement.
+// Anything else typed while the arm is moving is ignored.
 // ======================================================
 
-void moveTo(Pose target, int durationMs) {
+bool stopRequested() {
+  bool stop = false;
 
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == 'x' || c == 'X') {
+      stop = true;
+    }
+  }
+
+  return stop;
+}
+
+// Wait without blocking the stop command.
+// Returns false if the user asked to stop.
+bool waitMs(int durationMs) {
+  for (int waited = 0; waited < durationMs; waited += 10) {
+    if (stopRequested()) {
+      return false;
+    }
+    delay(10);
+  }
+  return true;
+}
+
+// ======================================================
+// SMOOTH MOVEMENT
+// Returns false if the user stopped it with x.
+// ======================================================
+
+bool moveTo(Pose target, int durationMs) {
   target = constrainPose(target);
 
   Pose start = currentPose;
@@ -174,27 +204,24 @@ void moveTo(Pose target, int durationMs) {
   const int steps = 50;
 
   for (int i = 1; i <= steps; i++) {
+    if (stopRequested()) {
+      Serial.println("STOPPED");
+      return false;
+    }
 
-    float progress =
-        (float)i / (float)steps;
+    float progress = (float)i / (float)steps;
+
+    if (EASED_MOTION) {
+      progress = progress * progress * (3.0f - 2.0f * progress);
+    }
 
     Pose intermediate;
 
-    intermediate.base =
-        start.base +
-        (target.base - start.base) * progress;
-
-    intermediate.shoulder =
-        start.shoulder +
-        (target.shoulder - start.shoulder) * progress;
-
-    intermediate.elbow =
-        start.elbow +
-        (target.elbow - start.elbow) * progress;
-
-    intermediate.gripper =
-        start.gripper +
-        (target.gripper - start.gripper) * progress;
+    for (int j = 0; j < JOINT_COUNT; j++) {
+      int from = getAngle(start, j);
+      int to = getAngle(target, j);
+      setAngle(intermediate, j, from + (to - from) * progress);
+    }
 
     writePose(intermediate);
 
@@ -202,6 +229,12 @@ void moveTo(Pose target, int durationMs) {
   }
 
   currentPose = target;
+  return true;
+}
+
+// Move, then pause. Returns false if stopped.
+bool go(Pose target, int durationMs, int pauseMs = 0) {
+  return moveTo(target, durationMs) && waitMs(pauseMs);
 }
 
 // ======================================================
@@ -209,48 +242,22 @@ void moveTo(Pose target, int durationMs) {
 // ======================================================
 
 void pickAndPlace() {
+  Serial.println("Starting pick and place (x = stop)");
 
-  Serial.println("Starting pick and place");
+  bool finished =
+      go(HOME, 1000, 500)             // start from HOME
+      && go(PICK_APPROACH, 1000, 300) // hover over the object
+      && go(PICK, 800, 300)           // lower onto it
+      && go(GRAB, 500, 500)           // close the gripper
+      && go(LIFT, 1000, 300)          // raise it
+      && go(PLACE_APPROACH, 1200, 300)// swing to the drop zone
+      && go(PLACE, 800, 300)          // lower it
+      && go(RELEASE, 500, 500)        // open the gripper
+      && go(PLACE_APPROACH, 800)      // move away
+      && go(HOME, 1200);              // return HOME
 
-  // HOME
-  moveTo(HOME, 1000);
-  delay(500);
-
-  // Move toward object
-  moveTo(PICK_APPROACH, 1000);
-  delay(300);
-
-  // Lower arm
-  moveTo(PICK, 800);
-  delay(300);
-
-  // Close gripper
-  moveTo(GRAB, 500);
-  delay(500);
-
-  // Lift object
-  moveTo(LIFT, 1000);
-  delay(300);
-
-  // Rotate toward target
-  moveTo(PLACE_APPROACH, 1200);
-  delay(300);
-
-  // Lower object
-  moveTo(PLACE, 800);
-  delay(300);
-
-  // Open gripper
-  moveTo(RELEASE, 500);
-  delay(500);
-
-  // Move away from target
-  moveTo(PLACE_APPROACH, 800);
-
-  // Return HOME
-  moveTo(HOME, 1200);
-
-  Serial.println("Sequence complete");
+  Serial.println(finished ? "Sequence complete"
+                          : "Sequence stopped");
 }
 
 // ======================================================
@@ -258,38 +265,78 @@ void pickAndPlace() {
 // ======================================================
 
 void testServos() {
+  Serial.println("Testing all joints (x = stop)");
 
-  Serial.println("Testing base");
-  baseServo.write(70);
-  delay(800);
-  baseServo.write(110);
-  delay(800);
-  baseServo.write(90);
+  const int offsets[JOINT_COUNT] = { 20, 20, 20, 40 };
 
-  Serial.println("Testing shoulder");
-  shoulderServo.write(70);
-  delay(800);
-  shoulderServo.write(110);
-  delay(800);
-  shoulderServo.write(90);
+  for (int j = 0; j < JOINT_COUNT; j++) {
+    Serial.print("Testing ");
+    Serial.println(CONFIG[j].name);
 
-  Serial.println("Testing elbow");
-  elbowServo.write(70);
-  delay(800);
-  elbowServo.write(110);
-  delay(800);
-  elbowServo.write(90);
+    Pose a = currentPose;
+    Pose b = currentPose;
 
-  Serial.println("Testing gripper");
-  gripperServo.write(30);
-  delay(800);
-  gripperServo.write(70);
-  delay(800);
-  gripperServo.write(30);
+    setAngle(a, j, getAngle(currentPose, j) - offsets[j]);
+    setAngle(b, j, getAngle(currentPose, j) + offsets[j]);
 
-  writePose(HOME);
+    Pose home = currentPose;
 
+    if (!(go(a, 800) && go(b, 1000) && go(home, 800))) {
+      Serial.println("Test stopped");
+      return;
+    }
+  }
+
+  go(HOME, 1000);
   Serial.println("Test complete");
+}
+
+// ======================================================
+// CALIBRATION (jog one joint at a time)
+// ======================================================
+
+int selectedJoint = BASE;
+
+void selectJoint(int joint) {
+  selectedJoint = joint;
+  Serial.print("Selected ");
+  Serial.print(CONFIG[joint].name);
+  Serial.print(" at ");
+  Serial.println(getAngle(currentPose, joint));
+}
+
+void jog(int delta) {
+  Pose p = currentPose;
+  int wanted = getAngle(p, selectedJoint) + delta;
+  int allowed = constrain(wanted,
+                          CONFIG[selectedJoint].minAngle,
+                          CONFIG[selectedJoint].maxAngle);
+
+  setAngle(p, selectedJoint, allowed);
+  writePose(p);
+
+  Serial.print(CONFIG[selectedJoint].name);
+  Serial.print(" = ");
+  Serial.print(allowed);
+
+  if (allowed != wanted) {
+    Serial.print("  (at limit)");
+  }
+
+  Serial.println();
+}
+
+// Print the current pose so it can be pasted above.
+void printPose() {
+  Serial.print("const Pose MY_POSE = { ");
+  Serial.print(currentPose.base);
+  Serial.print(", ");
+  Serial.print(currentPose.shoulder);
+  Serial.print(", ");
+  Serial.print(currentPose.elbow);
+  Serial.print(", ");
+  Serial.print(currentPose.gripper);
+  Serial.println(" };");
 }
 
 // ======================================================
@@ -297,7 +344,6 @@ void testServos() {
 // ======================================================
 
 void printMenu() {
-
   Serial.println();
   Serial.println("===========================");
   Serial.println(" ROBOT ARM CONTROL");
@@ -305,6 +351,15 @@ void printMenu() {
   Serial.println("h = HOME");
   Serial.println("t = Test servos");
   Serial.println("p = Pick and place");
+  Serial.println("x = STOP the current move");
+  Serial.println("---------------------------");
+  Serial.println("Calibrate one joint:");
+  Serial.println("b/s/e/g = select base/shoulder/");
+  Serial.println("          elbow/gripper");
+  Serial.println("+ / -   = jog 1 degree");
+  Serial.println("] / [   = jog 5 degrees");
+  Serial.println("c       = print current pose");
+  Serial.println("---------------------------");
   Serial.println("? = Show this menu");
   Serial.println("===========================");
 }
@@ -314,50 +369,26 @@ void printMenu() {
 // ======================================================
 
 void setup() {
-
   Serial.begin(115200);
 
   delay(1000);
 
   // Hobby servos normally use 50 Hz control
-  baseServo.setPeriodHertz(50);
-  shoulderServo.setPeriodHertz(50);
-  elbowServo.setPeriodHertz(50);
-  gripperServo.setPeriodHertz(50);
+  for (int j = 0; j < JOINT_COUNT; j++) {
+    servos[j].setPeriodHertz(50);
+  }
 
-  // Attach servos
-  //
-  // Starting conservatively with 1000-2000 us.
-  // Adjust only after testing the actual servos.
+  // Wake the servos up one at a time so they do not all
+  // jerk to HOME and draw current together.
+  for (int j = 0; j < JOINT_COUNT; j++) {
+    servos[j].attach(CONFIG[j].pin, SERVO_MIN_US, SERVO_MAX_US);
+    writeJoint(j, getAngle(HOME, j));
+    delay(300);
+  }
 
-  baseServo.attach(
-      BASE_PIN,
-      1000,
-      2000
-  );
+  currentPose = constrainPose(HOME);
 
-  shoulderServo.attach(
-      SHOULDER_PIN,
-      1000,
-      2000
-  );
-
-  elbowServo.attach(
-      ELBOW_PIN,
-      1000,
-      2000
-  );
-
-  gripperServo.attach(
-      GRIPPER_PIN,
-      1000,
-      2000
-  );
-
-  // Start robot in HOME position
-  writePose(HOME);
-
-  delay(1000);
+  delay(700);
 
   Serial.println();
   Serial.println("Robot arm ready!");
@@ -370,61 +401,90 @@ void setup() {
 // ======================================================
 
 void loop() {
+  if (!Serial.available()) {
+    return;
+  }
 
-  if (Serial.available()) {
+  char command = Serial.read();
 
-    char command = Serial.read();
+  switch (command) {
+    case 'h':
+    case 'H':
+      Serial.println("Going HOME");
+      moveTo(HOME, 1000);
+      break;
 
-    switch (command) {
+    case 't':
+    case 'T':
+      testServos();
+      break;
 
-      case 'h':
-      case 'H':
+    case 'p':
+    case 'P':
+      pickAndPlace();
+      break;
 
-        Serial.println("Going HOME");
+    case 'x':
+    case 'X':
+      Serial.println("Nothing is moving");
+      break;
 
-        moveTo(HOME, 1000);
+    case 'b':
+    case 'B':
+      selectJoint(BASE);
+      break;
 
-        break;
+    case 's':
+    case 'S':
+      selectJoint(SHOULDER);
+      break;
 
+    case 'e':
+    case 'E':
+      selectJoint(ELBOW);
+      break;
 
-      case 't':
-      case 'T':
+    case 'g':
+    case 'G':
+      selectJoint(GRIPPER);
+      break;
 
-        testServos();
+    case '+':
+    case '=':
+      jog(1);
+      break;
 
-        break;
+    case '-':
+    case '_':
+      jog(-1);
+      break;
 
+    case ']':
+      jog(5);
+      break;
 
-      case 'p':
-      case 'P':
+    case '[':
+      jog(-5);
+      break;
 
-        pickAndPlace();
+    case 'c':
+    case 'C':
+      printPose();
+      break;
 
-        break;
+    case '?':
+      printMenu();
+      break;
 
+    case '\r':
+    case '\n':
+      // Ignore line endings sent when Enter is pressed.
+      break;
 
-      case '?':
-
-        printMenu();
-
-        break;
-
-
-      case '\r':
-      case '\n':
-
-        // Ignore line endings sent when Enter is pressed.
-
-        break;
-
-
-      default:
-
-        Serial.print("Unknown command: ");
-        Serial.println(command);
-        Serial.println("Type ? to show the menu.");
-
-        break;
-    }
+    default:
+      Serial.print("Unknown command: ");
+      Serial.println(command);
+      Serial.println("Type ? to show the menu.");
+      break;
   }
 }

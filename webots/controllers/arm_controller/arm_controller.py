@@ -18,6 +18,8 @@ keyboard.enable(TIME_STEP)
 # These names must match robot_arm.wbt exactly.
 # ============================================================
 
+JOINTS = ["base", "shoulder", "elbow", "gripper"]
+
 motors = {
     "base": robot.getDevice("base_motor"),
     "shoulder": robot.getDevice("shoulder_motor"),
@@ -56,66 +58,25 @@ LIMITS = {
 
 # ============================================================
 # POSES
-# These match the ESP32 firmware.
+# These match the ESP32 firmware (src/main.cpp).
+#
+# Angles are servo degrees; 90 = neutral (upper arm vertical,
+# forearm horizontal). They were worked out for an object on
+# the table about 110 mm in front of the base axis.
+# Regenerate with:  python tools/arm_poses.py --reach 140
 # ============================================================
 
-HOME = {
-    "base": 90,
-    "shoulder": 90,
-    "elbow": 90,
-    "gripper": 30,
-}
-
-PICK_APPROACH = {
-    "base": 45,
-    "shoulder": 95,
-    "elbow": 80,
-    "gripper": 30,
-}
-
-PICK = {
-    "base": 45,
-    "shoulder": 120,
-    "elbow": 60,
-    "gripper": 30,
-}
-
-GRAB = {
-    "base": 45,
-    "shoulder": 120,
-    "elbow": 60,
-    "gripper": 75,
-}
-
-LIFT = {
-    "base": 45,
-    "shoulder": 80,
-    "elbow": 90,
-    "gripper": 75,
-}
-
-PLACE_APPROACH = {
-    "base": 135,
-    "shoulder": 85,
-    "elbow": 90,
-    "gripper": 75,
-}
-
-PLACE = {
-    "base": 135,
-    "shoulder": 115,
-    "elbow": 65,
-    "gripper": 75,
-}
-
-RELEASE = {
-    "base": 135,
-    "shoulder": 115,
-    "elbow": 65,
-    "gripper": 30,
-}
+HOME = {"base": 90, "shoulder": 90, "elbow": 90, "gripper": 30}
+PICK_APPROACH = {"base": 45, "shoulder": 97, "elbow": 124, "gripper": 30}
+PICK = {"base": 45, "shoulder": 135, "elbow": 112, "gripper": 30}
+GRAB = {"base": 45, "shoulder": 135, "elbow": 112, "gripper": 75}
+LIFT = {"base": 45, "shoulder": 97, "elbow": 124, "gripper": 75}
+PLACE_APPROACH = {"base": 135, "shoulder": 97, "elbow": 124, "gripper": 75}
+PLACE = {"base": 135, "shoulder": 135, "elbow": 112, "gripper": 75}
+RELEASE = {"base": 135, "shoulder": 135, "elbow": 112, "gripper": 30}
 
 current_pose = HOME.copy()
+selected_joint = "base"
 
 
 # ============================================================
@@ -142,7 +103,8 @@ def servo_to_joint(joint, servo_degrees):
 
     The base, shoulder and elbow use 90 degrees as the zero
     position. The gripper maps 20-90 servo degrees onto
-    0 to -35 Webots degrees.
+    0 to +35 Webots degrees: 0 is fully open and larger angles
+    close the finger towards the fixed jaw.
     """
 
     if joint == "gripper":
@@ -151,7 +113,7 @@ def servo_to_joint(joint, servo_degrees):
             / (LIMITS["gripper"][1] - LIMITS["gripper"][0])
         )
 
-        return radians(-35.0 * fraction)
+        return radians(35.0 * fraction)
 
     return radians(servo_degrees - 90.0)
 
@@ -168,10 +130,34 @@ def write_pose(pose):
         motors[joint].setPosition(target_radians)
 
 
+# ============================================================
+# STOP COMMAND
+# Press X in the 3D view to stop the current movement.
+# Other keys pressed during a movement are ignored.
+# ============================================================
+
+def stop_requested():
+    stop = False
+
+    while True:
+        key = keyboard.getKey()
+
+        if key == -1:
+            return stop
+
+        if chr(key & 0xFF).lower() == "x":
+            stop = True
+
+
 def wait_ms(duration_ms):
+    """Wait without blocking the stop key. False = stopped."""
+
     steps = max(1, int(duration_ms / TIME_STEP))
 
     for _ in range(steps):
+        if stop_requested():
+            return False
+
         if robot.step(TIME_STEP) == -1:
             return False
 
@@ -182,6 +168,7 @@ def move_to(target, duration_ms):
     """
     Linearly interpolate every joint from the current pose to
     the target pose. This mirrors moveTo() in the ESP32 code.
+    Returns False if the movement was stopped.
     """
 
     global current_pose
@@ -192,6 +179,10 @@ def move_to(target, duration_ms):
     steps = max(1, int(duration_ms / TIME_STEP))
 
     for step in range(1, steps + 1):
+        if stop_requested():
+            print("STOPPED")
+            return False
+
         progress = step / steps
 
         intermediate = {
@@ -201,6 +192,7 @@ def move_to(target, duration_ms):
         }
 
         write_pose(intermediate)
+        current_pose = constrain_pose(intermediate)
 
         if robot.step(TIME_STEP) == -1:
             return False
@@ -209,32 +201,35 @@ def move_to(target, duration_ms):
     return True
 
 
+def go(target, duration_ms, pause_ms=0):
+    """Move, then pause. Returns False if stopped."""
+
+    return move_to(target, duration_ms) and (
+        pause_ms == 0 or wait_ms(pause_ms)
+    )
+
+
 # ============================================================
 # SERVO TEST
 # ============================================================
 
 def test_servos():
-    print("Testing base")
-    move_to({**current_pose, "base": 70}, 800)
-    move_to({**current_pose, "base": 110}, 800)
-    move_to({**current_pose, "base": 90}, 800)
+    print("Testing all joints (X = stop)")
 
-    print("Testing shoulder")
-    move_to({**current_pose, "shoulder": 70}, 800)
-    move_to({**current_pose, "shoulder": 110}, 800)
-    move_to({**current_pose, "shoulder": 90}, 800)
+    offsets = {"base": 20, "shoulder": 20, "elbow": 20, "gripper": 40}
 
-    print("Testing elbow")
-    move_to({**current_pose, "elbow": 70}, 800)
-    move_to({**current_pose, "elbow": 110}, 800)
-    move_to({**current_pose, "elbow": 90}, 800)
+    for joint in JOINTS:
+        print("Testing", joint)
 
-    print("Testing gripper")
-    move_to({**current_pose, "gripper": 30}, 800)
-    move_to({**current_pose, "gripper": 70}, 800)
-    move_to({**current_pose, "gripper": 30}, 800)
+        before = current_pose.copy()
+        low = {**before, joint: before[joint] - offsets[joint]}
+        high = {**before, joint: before[joint] + offsets[joint]}
 
-    move_to(HOME, 1000)
+        if not (go(low, 800) and go(high, 1000) and go(before, 800)):
+            print("Test stopped")
+            return
+
+    go(HOME, 1000)
     print("Test complete")
 
 
@@ -243,36 +238,56 @@ def test_servos():
 # ============================================================
 
 def pick_and_place():
-    print("Starting pick and place")
+    print("Starting pick and place (X = stop)")
 
-    move_to(HOME, 1000)
-    wait_ms(500)
+    finished = (
+        go(HOME, 1000, 500)
+        and go(PICK_APPROACH, 1000, 300)
+        and go(PICK, 800, 300)
+        and go(GRAB, 500, 500)
+        and go(LIFT, 1000, 300)
+        and go(PLACE_APPROACH, 1200, 300)
+        and go(PLACE, 800, 300)
+        and go(RELEASE, 500, 500)
+        and go(PLACE_APPROACH, 800)
+        and go(HOME, 1200)
+    )
 
-    move_to(PICK_APPROACH, 1000)
-    wait_ms(300)
+    print("Sequence complete" if finished else "Sequence stopped")
 
-    move_to(PICK, 800)
-    wait_ms(300)
 
-    move_to(GRAB, 500)
-    wait_ms(500)
+# ============================================================
+# CALIBRATION (jog one joint at a time)
+# ============================================================
 
-    move_to(LIFT, 1000)
-    wait_ms(300)
+def select_joint(joint):
+    global selected_joint
 
-    move_to(PLACE_APPROACH, 1200)
-    wait_ms(300)
+    selected_joint = joint
+    print("Selected %s at %d" % (joint, current_pose[joint]))
 
-    move_to(PLACE, 800)
-    wait_ms(300)
 
-    move_to(RELEASE, 500)
-    wait_ms(500)
+def jog(delta):
+    global current_pose
 
-    move_to(PLACE_APPROACH, 800)
-    move_to(HOME, 1200)
+    minimum, maximum = LIMITS[selected_joint]
+    wanted = current_pose[selected_joint] + delta
+    allowed = clamp(wanted, minimum, maximum)
 
-    print("Sequence complete")
+    current_pose = {**current_pose, selected_joint: allowed}
+    write_pose(current_pose)
+
+    note = "  (at limit)" if allowed != wanted else ""
+    print("%s = %d%s" % (selected_joint, allowed, note))
+
+
+def print_pose():
+    p = current_pose
+    print(
+        'MY_POSE = {"base": %d, "shoulder": %d, "elbow": %d, "gripper": %d}'
+        % (round(p["base"]), round(p["shoulder"]),
+           round(p["elbow"]), round(p["gripper"]))
+    )
 
 
 # ============================================================
@@ -288,6 +303,15 @@ def print_menu():
     print("H = HOME")
     print("T = Test servos")
     print("P = Pick and place")
+    print("X = STOP the current move")
+    print("---------------------------")
+    print("Calibrate one joint:")
+    print("B/S/E/G = select base/shoulder/")
+    print("          elbow/gripper")
+    print("+ / -   = jog 1 degree")
+    print("] / [   = jog 5 degrees")
+    print("C       = print current pose")
+    print("---------------------------")
     print("? = Show this menu")
     print("===========================")
 
@@ -319,6 +343,36 @@ while robot.step(TIME_STEP) != -1:
 
     elif character == "p":
         pick_and_place()
+
+    elif character == "x":
+        print("Nothing is moving")
+
+    elif character == "b":
+        select_joint("base")
+
+    elif character == "s":
+        select_joint("shoulder")
+
+    elif character == "e":
+        select_joint("elbow")
+
+    elif character == "g":
+        select_joint("gripper")
+
+    elif character in ("+", "="):
+        jog(1)
+
+    elif character in ("-", "_"):
+        jog(-1)
+
+    elif character == "]":
+        jog(5)
+
+    elif character == "[":
+        jog(-5)
+
+    elif character == "c":
+        print_pose()
 
     elif character == "?":
         print_menu()

@@ -142,6 +142,32 @@ This usually indicates an inadequate supply or a missing common ground. Use a re
 
 Disconnect servo power immediately. Reduce that joint's range in `src/main.cpp`, reposition the horn if required, and retest without a load. Do not rely on the example angle limits for a different arm.
 
-## Commands are delayed
+## Commands are delayed or ignored during a movement
 
-Motion is intentionally blocking: the firmware finishes the current movement before reading the next command. This keeps the workshop code easy to follow. A state-machine implementation is required for interruption or emergency-stop behavior.
+Motion is intentionally blocking to keep the workshop code easy to follow. Typing `x` (then Enter) is checked during a movement and stops it, but any other key typed during a movement is ignored. This is a software stop only; it is not a substitute for cutting servo power. A state-machine implementation is required for full interruption or a hardware emergency-stop input.
+
+## HOME looks like an "L" in Webots
+
+That is correct for the 3D-printed arm. At servo 90° the upper arm is vertical and the forearm is horizontal. Older versions of this project showed a simplified arm with the forearm pointing straight up.
+
+## The arm does not reach the object on the table
+
+The shoulder axis is about 87.5 mm above the table, so reaching a table object needs the shoulder near 135° and the elbow near 112°. Work out poses for your object position with:
+
+```powershell
+python tools/arm_poses.py --reach 110 --pick-height 8
+```
+
+If the tool reports no safe angles, the point is too close or too far for the limits in `CONFIG`. Do not widen the limits until you have calibrated each joint on the real arm.
+
+## A joint moves the wrong way on the real arm
+
+Set that joint's `invert` flag to `true` in the `CONFIG` table in `src/main.cpp`, rebuild, and re-test with the jog keys. If the arm is a few degrees off after assembly, use `trim` instead of editing every pose.
+
+## The real servos do not reach their full range
+
+The firmware uses a conservative 1000–2000 µs pulse range. After wiring, check `SERVO_MIN_US` and `SERVO_MAX_US` against your servos and change them only if a joint cannot reach its range. Recalibrate every limit afterwards.
+
+## Webots shows no arm, or parts are missing
+
+The world loads its parts from `webots/meshes/*.stl` using paths relative to the world file. Check that all nine files exist there and that the repository was cloned complete.

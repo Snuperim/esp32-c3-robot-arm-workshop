@@ -19,13 +19,20 @@ Click inside the Webots 3D view and press:
 | `H` | Return home |
 | `T` | Test every joint |
 | `P` | Run pick-and-place |
+| `X` | Stop the current movement |
+| `B` `S` `E` `G` | Select base, shoulder, elbow, or gripper |
+| `+` / `-` | Jog the selected joint 1° |
+| `]` / `[` | Jog the selected joint 5° |
+| `C` | Print the current pose, ready to paste into code |
 | `?` | Print the control menu |
 
 The Webots console is output-only. Keyboard commands are received by the 3D view while the simulation is running.
 
+The arm in Webots is the same 3D-printed design as the real arm. Its meshes are exported from CAD into `webots/meshes/` (millimetres, Z up, the table at height 0).
+
 ### Wokwi circuit simulation
 
-Run **PlatformIO: Build**, open `diagram.json`, and start **Wokwi: Start Simulator**. Type `h`, `t`, `p`, or `?` into Wokwi's built-in terminal and press Enter.
+Run **PlatformIO: Build**, open `diagram.json`, and start **Wokwi: Start Simulator**. Type `h`, `t`, `p`, `x`, or `?` into Wokwi's built-in terminal and press Enter. The calibration commands (`b`/`s`/`e`/`g`, `+`/`-`, `]`/`[`, `c`) work the same way as in Webots.
 
 > **Hardware safety:** Do not power four servos from the ESP32 board's 5 V pin on a physical robot. Use a regulated external 5 V supply sized for the combined stall current, and connect the supply ground to the ESP32 ground. Calibrate every joint before running the automatic sequence.
 
@@ -203,16 +210,31 @@ The repository has a separate PlatformIO environment named `physical` for the re
 3. Connect the ESP32 ground and external servo-supply ground together.
 4. Remove servo horns or unload the joints for the first power-on where practical.
 5. In PlatformIO, select **Project Tasks → physical → Build/Upload**.
-6. Run `t` and verify one joint at a time.
-7. Adjust the limits and poses in `src/main.cpp` before running `p`.
+6. Select one joint (`b`, `s`, `e`, or `g`) and jog it with `+`/`-` in small steps. Record the range where it moves freely.
+7. Put those limits in the `CONFIG` table in `src/main.cpp`. If a servo turns the wrong way, set its `invert` flag; if a horn is slightly off, use `trim`.
+8. Run `t`, then check the poses one at a time before running `p`. Type `x` at any time to stop a movement.
 
 Never force a stalled servo. Disconnect power if a joint reaches a mechanical stop, vibrates continuously, or becomes hot.
 
+The servo pulse range (`SERVO_MIN_US` / `SERVO_MAX_US`) starts at a conservative 1000–2000 µs. Check it against your servos after wiring and change it only if a joint cannot reach its full range.
+
 ## How the firmware works
 
-Each arm position is a `Pose` containing base, shoulder, elbow, and gripper angles. `constrainPose()` clamps every target to its configured limits. `moveTo()` linearly interpolates all four joints over 50 steps, producing coordinated motion. The predefined poses form the pick-and-place sequence.
+Each arm position is a `Pose` containing base, shoulder, elbow, and gripper angles. `CONFIG` holds each joint's pin, safe range, direction, and trim. `constrainPose()` clamps every target to its range. `moveTo()` linearly interpolates all four joints over 50 steps, producing coordinated motion, and the predefined poses form the pick-and-place sequence.
 
-The movement code uses blocking delays to keep it approachable for a workshop. Serial commands are processed after the current movement finishes.
+The movement code uses blocking delays to keep it approachable for a workshop. Typing `x` is checked during a movement and stops it; other keys typed during a movement are ignored.
+
+## Pick-and-place poses
+
+The poses are worked out for an object on the table about 110 mm in front of the base axis, with the table at the very bottom of the arm base (height 0). The shoulder axis is 87.5 mm above the table, so the arm has to lean well forward to reach it: at the pick position the shoulder is near 135° and the elbow near 112°.
+
+To plan a different position, run:
+
+```powershell
+python tools/arm_poses.py --reach 140 --pick-height 20
+```
+
+It prints the eight poses and ready-to-paste lines for `src/main.cpp` and `arm_controller.py`. Treat the result as a starting point and tune it on the real arm.
 
 ## Repository layout
 
@@ -223,7 +245,9 @@ The movement code uses blocking delays to keep it approachable for a workshop. S
 | `diagram.json` | Wokwi ESP32-C3 and four-servo circuit |
 | `wokwi.toml` | Wokwi firmware paths and optional serial forwarding |
 | `webots/worlds/robot_arm.wbt` | Complete 3D robot-arm world |
+| `webots/meshes/*.stl` | Arm parts exported from CAD (mm, Z up), used by the world |
 | `webots/controllers/arm_controller/arm_controller.py` | Webots keyboard and motion controller |
+| `tools/arm_poses.py` | Works out servo angles for pick and place positions |
 | `scripts/start-webots.ps1` | Reliable Windows Webots launcher |
 | `docs/SETUP_GUIDE.md` | Complete installation, simulation, and GitHub guide |
 | `docs/WORKSHOP_GUIDE.md` | Suggested facilitator plan and calibration activity |

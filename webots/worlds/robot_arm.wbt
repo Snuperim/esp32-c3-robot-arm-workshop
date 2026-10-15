@@ -3,11 +3,18 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 
+# Arm geometry exported from the Fusion model (webots/meshes/*.stl, millimetres, Z up).
+# Every mesh sits in a Transform with scale 0.001 and is offset by minus its joint
+# origin so the STL world coordinates line up with the hinge anchors below.
+#
+# Joint heights (m): base yaw 0.0665, shoulder 0.0875, elbow 0.2055, gripper x 0.110.
+# Neutral pose (all joints 0 = servo 90 deg): upper arm vertical, forearm horizontal.
+
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.31257561648347976 -0.11233109374025271 0.9432275490882841 3.7952226942998757
-  position 1.7852757369073537 1.8064659783967512 1.9688363349595577
+  orientation 0.826125 0.342192 0.447685 1.493165
+  position 0.65 -0.65 0.50
 }
 TexturedBackground {
 }
@@ -35,27 +42,39 @@ Solid {
 }
 Robot {
   children [
-    Pose {
-      translation 0 0 0.04
+    Transform {
+      scale 0.001 0.001 0.001
       children [
         Shape {
-          appearance DEF BASE_APPEARANCE PBRAppearance {
-            baseColor 0.12 0.12 0.15
-            roughness 0.45
-            metalness 0.2
+          appearance DEF WHITE_APPEARANCE PBRAppearance {
+            baseColor 0.9 0.9 0.92
+            roughness 0.6
+            metalness 0
           }
-          geometry Cylinder {
-            height 0.08
-            radius 0.08
+          geometry Mesh {
+            url [
+              "../meshes/base_plate.stl"
+            ]
+          }
+        }
+        Shape {
+          appearance DEF SERVO_APPEARANCE PBRAppearance {
+            baseColor 0.05 0.05 0.06
+            roughness 0.4
+            metalness 0.1
+          }
+          geometry Mesh {
+            url [
+              "../meshes/servo_base.stl"
+            ]
           }
         }
       ]
     }
     HingeJoint {
       jointParameters HingeJointParameters {
-        position -1.6329688712346524e-08
         axis 0 0 1
-        anchor 0 0 0.08
+        anchor 0 0 0.0665
         minStop -1.22173
         maxStop 1.22173
         dampingConstant 0.1
@@ -73,20 +92,34 @@ Robot {
         }
       ]
       endPoint Solid {
-        translation 0 0 0.08
+        translation 0 0 0.0665
         children [
-          Shape {
-            appearance USE BASE_APPEARANCE
-            geometry Cylinder {
-              height 0.06
-              radius 0.06
-            }
+          Transform {
+            translation 0 0 -0.0665
+            scale 0.001 0.001 0.001
+            children [
+              Shape {
+                appearance USE WHITE_APPEARANCE
+                geometry Mesh {
+                  url [
+                    "../meshes/turntable.stl"
+                  ]
+                }
+              }
+              Shape {
+                appearance USE SERVO_APPEARANCE
+                geometry Mesh {
+                  url [
+                    "../meshes/servo_shoulder.stl"
+                  ]
+                }
+              }
+            ]
           }
           HingeJoint {
             jointParameters HingeJointParameters {
-              position 1.1143489366037982e-08
               axis 0 1 0
-              anchor 0 0 0.04
+              anchor 0 0 0.021
               minStop -1.0472
               maxStop 1.0472
               dampingConstant 0.1
@@ -104,29 +137,38 @@ Robot {
               }
             ]
             endPoint Solid {
-              translation 0 0 0.04
-              rotation 0 1 0 0
+              translation 0 0 0.021
               children [
-                Pose {
-                  translation 0 0 0.1
+                Transform {
+                  translation 0 0 -0.0875
+                  scale 0.001 0.001 0.001
                   children [
                     Shape {
                       appearance DEF ARM_APPEARANCE PBRAppearance {
-                        baseColor 0.15 0.4 0.85
-                        roughness 0.5
+                        baseColor 0.75 0.1 0.1
+                        roughness 0.35
                         metalness 0
                       }
-                      geometry Box {
-                        size 0.05 0.05 0.2
+                      geometry Mesh {
+                        url [
+                          "../meshes/upper_arm.stl"
+                        ]
+                      }
+                    }
+                    Shape {
+                      appearance USE SERVO_APPEARANCE
+                      geometry Mesh {
+                        url [
+                          "../meshes/servo_elbow.stl"
+                        ]
                       }
                     }
                   ]
                 }
                 HingeJoint {
                   jointParameters HingeJointParameters {
-                    position 1.012445458047969e-08
                     axis 0 1 0
-                    anchor 0 0 0.2
+                    anchor 0 0 0.118
                     minStop -1.0472
                     maxStop 1.0472
                     dampingConstant 0.08
@@ -144,48 +186,44 @@ Robot {
                     }
                   ]
                   endPoint Solid {
-                    translation 0 0 0.2
-                    rotation 0 1 0 0
+                    translation 0 0 0.118
                     children [
-                      Pose {
-                        translation 0 0 0.09
+                      Transform {
+                        translation 0 0 -0.2055
+                        scale 0.001 0.001 0.001
                         children [
                           Shape {
                             appearance USE ARM_APPEARANCE
-                            geometry Box {
-                              size 0.045 0.045 0.18
+                            geometry Mesh {
+                              url [
+                                "../meshes/forearm.stl"
+                              ]
                             }
                           }
-                        ]
-                      }
-                      Pose {
-                        translation -0.03 0 0.22
-                        children [
                           Shape {
-                            appearance DEF GRIPPER_APPEARANCE PBRAppearance {
-                              baseColor 0.85 0.25 0.1
-                              roughness 0.5
-                              metalness 0
-                            }
-                            geometry Box {
-                              size 0.025 0.04 0.08
+                            appearance USE SERVO_APPEARANCE
+                            geometry Mesh {
+                              url [
+                                "../meshes/servo_gripper.stl"
+                              ]
                             }
                           }
                         ]
                       }
                       HingeJoint {
                         jointParameters HingeJointParameters {
-                          position -0.08726644329580058
                           axis 0 1 0
-                          anchor 0 0 0.18
-                          minStop -0.610865
+                          anchor 0.11 0 0
+                          minStop 0
+                          maxStop 0.610865
                           dampingConstant 0.04
                         }
                         device [
                           RotationalMotor {
                             name "gripper_motor"
                             maxVelocity 3
-                            minPosition -0.610865
+                            minPosition 0
+                            maxPosition 0.610865
                             maxTorque 0.5
                           }
                           PositionSensor {
@@ -193,27 +231,41 @@ Robot {
                           }
                         ]
                         endPoint Solid {
-                          translation 0 0 0.18
-                          rotation 0 -1 0 0.08726644329579888
+                          translation 0.11 0 0
                           children [
-                            Pose {
-                              translation 0.03 0 0.04
+                            Transform {
+                              translation -0.11 0 -0.2055
+                              scale 0.001 0.001 0.001
                               children [
                                 Shape {
-                                  appearance USE GRIPPER_APPEARANCE
-                                  geometry Box {
-                                    size 0.025 0.04 0.08
+                                  appearance USE ARM_APPEARANCE
+                                  geometry Mesh {
+                                    url [
+                                      "../meshes/finger.stl"
+                                    ]
                                   }
                                 }
                               ]
                             }
                           ]
                           name "moving gripper finger"
-                          boundingObject Pose {
-                            translation 0.03 0 0.04
+                          boundingObject Group {
                             children [
-                              Box {
-                                size 0.025 0.04 0.08
+                              Pose {
+                                translation 0.0215 0.08315 0
+                                children [
+                                  Box {
+                                    size 0.067 0.005 0.016
+                                  }
+                                ]
+                              }
+                              Pose {
+                                translation 0.051 0.08315 -0.0155
+                                children [
+                                  Box {
+                                    size 0.014 0.005 0.047
+                                  }
+                                ]
                               }
                             ]
                           }
@@ -221,8 +273,6 @@ Robot {
                             density -1
                             mass 0.08
                           }
-                          linearVelocity -3.09678272225948e-08 -1.1100343502836551e-07 -1.5706614703593932e-08
-                          angularVelocity 4.639187852676721e-07 -1.882354461916285e-08 -1.9620335512872113e-07
                         }
                       }
                     ]
@@ -230,18 +280,18 @@ Robot {
                     boundingObject Group {
                       children [
                         Pose {
-                          translation 0 0 0.09
+                          translation 0.055 0.0548 0
                           children [
                             Box {
-                              size 0.045 0.045 0.18
+                              size 0.138 0.0507 0.028
                             }
                           ]
                         }
                         Pose {
-                          translation -0.03 0 0.22
+                          translation 0.109 0.08165 -0.0275
                           children [
                             Box {
-                              size 0.025 0.04 0.08
+                              size 0.008 0.008 0.029
                             }
                           ]
                         }
@@ -251,17 +301,15 @@ Robot {
                       density -1
                       mass 0.2
                     }
-                    linearVelocity -2.7578330390466653e-09 -5.0782542142812334e-08 -3.1652102450152596e-09
-                    angularVelocity 8.468881948898712e-08 -3.9625092161998964e-08 -1.6649222682662817e-07
                   }
                 }
               ]
               name "upper arm"
               boundingObject Pose {
-                translation 0 0 0.1
+                translation 0 -0.0001 0.059
                 children [
                   Box {
-                    size 0.05 0.05 0.2
+                    size 0.028 0.0593 0.146
                   }
                 ]
               }
@@ -269,32 +317,45 @@ Robot {
                 density -1
                 mass 0.3
               }
-              linearVelocity -2.360623855548761e-09 -1.6628230516249772e-08 -9.370609177494771e-10
-              angularVelocity 8.458299268619404e-08 -3.963221602548893e-08 -1.6648496612059254e-07
             }
           }
         ]
         name "base turret"
-        boundingObject Cylinder {
-          height 0.06
-          radius 0.06
+        boundingObject Group {
+          children [
+            Pose {
+              translation 0 0 0.003
+              children [
+                Cylinder {
+                  height 0.006
+                  radius 0.05
+                }
+              ]
+            }
+            Pose {
+              translation -0.01025 0 0.0174
+              children [
+                Box {
+                  size 0.0605 0.0495 0.0268
+                }
+              ]
+            }
+          ]
         }
         physics Physics {
           density -1
           mass 0.25
         }
-        linearVelocity -1.4648942180792783e-10 9.288110123797596e-12 1.0779956483020214e-11
-        angularVelocity -4.54327491743994e-12 -2.448840605149501e-11 -1.6528425174579562e-07
       }
     }
   ]
   name "workshop robot arm"
   boundingObject Pose {
-    translation 0 0 0.04
+    translation 0 0 0.024
     children [
       Cylinder {
-        height 0.08
-        radius 0.08
+        height 0.048
+        radius 0.065
       }
     ]
   }

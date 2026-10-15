@@ -21,7 +21,7 @@ By the end of the workshop, participants should be able to:
 - one regulated 5 V servo supply with adequate current capacity;
 - USB cable for the ESP32-C3;
 - jumper wires and a shared-ground connection;
-- pre-manufactured robot-arm parts and hardware;
+- the 3D-printed arm parts (base plate, turntable, upper-arm and forearm housings, finger) and the four MG996R servos with their horns and fasteners;
 - one lightweight object for the pick-and-place activity; and
 - a computer with VS Code, PlatformIO IDE, Wokwi, and the required CAD software installed.
 
@@ -87,11 +87,17 @@ Use the `physical` PlatformIO environment when uploading to the real ESP32-C3.
 
 ### 5. Calibrate one joint at a time
 
-Begin near 90°. Move in small increments and record the mechanical range where the joint moves freely. Leave a safety margin at both ends, then update the corresponding minimum and maximum constants in `src/main.cpp`.
+Start at `HOME` (all joints at 90°). Select one joint with `b`, `s`, `e`, or `g`, then jog it with `+`/`-` (1°) or `]`/`[` (5°). Move in small increments and record the angle at each end where the joint still moves freely. Leave a safety margin at both ends, then enter the values in the `CONFIG` table in `src/main.cpp`.
 
-The existing `t` command uses moderate test positions. Change those test positions if the physical mechanism cannot safely reach them.
+Two other values live in the same table. If a servo turns the wrong way for how it is mounted, set `invert` to `true`. If a horn was fitted a few degrees off, use `trim` rather than editing every pose.
+
+Type `x` at any time to stop a movement. The `t` command moves each joint ±20° (±40° for the gripper) around its current position and honours the limits.
+
+The servo pulse range (`SERVO_MIN_US` / `SERVO_MAX_US`) starts at a conservative 1000–2000 µs. Check it against your servos after wiring and change it only if a joint cannot reach its full range; recalibrate the limits afterwards.
 
 ### 6. Calibrate poses
+
+The poses are worked out for an object on the table about 110 mm in front of the base axis (the table is the bottom of the arm base). To plan another position, use `python tools/arm_poses.py --reach <mm> --pick-height <mm>` and paste the output into `src/main.cpp` (and `arm_controller.py` for Webots). Treat the output as a starting point and fine-tune each pose with the jog keys, using `c` to print the pose you reach.
 
 Adjust poses in this order:
 
@@ -108,7 +114,7 @@ Test each new pose without an object before running the full sequence. Keep a ha
 
 ## Discussion and extension ideas
 
-- Replace linear interpolation with eased motion.
+- Turn on `EASED_MOTION` in `src/main.cpp` and compare it with linear interpolation.
 - Add potentiometers or a joystick for manual control.
 - Store calibrated limits in nonvolatile memory.
 - Add a physical emergency-stop input.

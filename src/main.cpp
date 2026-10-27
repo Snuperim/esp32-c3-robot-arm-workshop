@@ -7,6 +7,11 @@
 //
 // Angles are servo degrees (0-180).
 // 90 = neutral: upper arm vertical, forearm horizontal.
+//
+// Gripper: one servo moves one straight jaw towards a
+// fixed jaw. 90 = jaws touching, a smaller angle opens
+// the jaw (40 is about 50 degrees open). The jaw is
+// driven 1:1 by the servo horn.
 // ======================================================
 
 // -------------------- SERVO PULSE RANGE ----------------
@@ -44,7 +49,7 @@ const JointConfig CONFIG[JOINT_COUNT] = {
   { "base",      3,   20, 160, false,  0 },
   { "shoulder",  4,   30, 150, false,  0 },
   { "elbow",     5,   30, 150, false,  0 },
-  { "gripper",   6,   20,  90, false,  0 },
+  { "gripper",   6,   30,  88, false,  0 },
 };
 
 Servo servos[JOINT_COUNT];
@@ -79,7 +84,7 @@ void setAngle(Pose& p, int joint, int value) {
   }
 }
 
-Pose currentPose = { 90, 90, 90, 30 };
+Pose currentPose = { 90, 90, 90, 40 };
 
 // ======================================================
 // PREDEFINED ROBOT POSITIONS
@@ -93,29 +98,29 @@ Pose currentPose = { 90, 90, 90, 30 };
 // Always test each pose without an object first.
 // ======================================================
 
-// Neutral safe position
-const Pose HOME = { 90, 90, 90, 30 };
+// Neutral safe position, jaw open
+const Pose HOME = { 90, 90, 90, 40 };
 
 // Hovering above the pickup object
-const Pose PICK_APPROACH = { 45, 97, 124, 30 };
+const Pose PICK_APPROACH = { 45, 96, 135, 40 };
 
-// Lowered onto the object, gripper open
-const Pose PICK = { 45, 135, 112, 30 };
+// Lowered next to the object, gripper open
+const Pose PICK = { 45, 132, 124, 40 };
 
-// Object gripped
-const Pose GRAB = { 45, 135, 112, 75 };
+// Object gripped (58 closes on a 25 mm object; tune it)
+const Pose GRAB = { 45, 132, 124, 58 };
 
 // Raise the object
-const Pose LIFT = { 45, 97, 124, 75 };
+const Pose LIFT = { 45, 96, 135, 58 };
 
 // Above the drop zone
-const Pose PLACE_APPROACH = { 135, 97, 124, 75 };
+const Pose PLACE_APPROACH = { 135, 96, 135, 58 };
 
 // Lowered into the drop position
-const Pose PLACE = { 135, 135, 112, 75 };
+const Pose PLACE = { 135, 132, 124, 58 };
 
 // Release the object
-const Pose RELEASE = { 135, 135, 112, 30 };
+const Pose RELEASE = { 135, 132, 124, 40 };
 
 // ======================================================
 // LIMIT FUNCTION
@@ -267,7 +272,7 @@ void pickAndPlace() {
 void testServos() {
   Serial.println("Testing all joints (x = stop)");
 
-  const int offsets[JOINT_COUNT] = { 20, 20, 20, 40 };
+  const int offsets[JOINT_COUNT] = { 20, 20, 20, 15 };
 
   for (int j = 0; j < JOINT_COUNT; j++) {
     Serial.print("Testing ");

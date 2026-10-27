@@ -52,7 +52,7 @@ LIMITS = {
     "base": (20, 160),
     "shoulder": (30, 150),
     "elbow": (30, 150),
-    "gripper": (20, 90),
+    "gripper": (30, 88),
 }
 
 
@@ -61,19 +61,21 @@ LIMITS = {
 # These match the ESP32 firmware (src/main.cpp).
 #
 # Angles are servo degrees; 90 = neutral (upper arm vertical,
-# forearm horizontal). They were worked out for an object on
-# the table about 110 mm in front of the base axis.
+# forearm horizontal). For the gripper, 90 = jaws touching and
+# a smaller angle opens the jaw (40 is about 50 degrees open).
+# They were worked out for an object on the table about
+# 110 mm in front of the base axis.
 # Regenerate with:  python tools/arm_poses.py --reach 140
 # ============================================================
 
-HOME = {"base": 90, "shoulder": 90, "elbow": 90, "gripper": 30}
-PICK_APPROACH = {"base": 45, "shoulder": 97, "elbow": 124, "gripper": 30}
-PICK = {"base": 45, "shoulder": 135, "elbow": 112, "gripper": 30}
-GRAB = {"base": 45, "shoulder": 135, "elbow": 112, "gripper": 75}
-LIFT = {"base": 45, "shoulder": 97, "elbow": 124, "gripper": 75}
-PLACE_APPROACH = {"base": 135, "shoulder": 97, "elbow": 124, "gripper": 75}
-PLACE = {"base": 135, "shoulder": 135, "elbow": 112, "gripper": 75}
-RELEASE = {"base": 135, "shoulder": 135, "elbow": 112, "gripper": 30}
+HOME = {"base": 90, "shoulder": 90, "elbow": 90, "gripper": 40}
+PICK_APPROACH = {"base": 45, "shoulder": 96, "elbow": 135, "gripper": 40}
+PICK = {"base": 45, "shoulder": 132, "elbow": 124, "gripper": 40}
+GRAB = {"base": 45, "shoulder": 132, "elbow": 124, "gripper": 58}
+LIFT = {"base": 45, "shoulder": 96, "elbow": 135, "gripper": 58}
+PLACE_APPROACH = {"base": 135, "shoulder": 96, "elbow": 135, "gripper": 58}
+PLACE = {"base": 135, "shoulder": 132, "elbow": 124, "gripper": 58}
+RELEASE = {"base": 135, "shoulder": 132, "elbow": 124, "gripper": 40}
 
 current_pose = HOME.copy()
 selected_joint = "base"
@@ -101,19 +103,11 @@ def servo_to_joint(joint, servo_degrees):
     """
     Convert physical-servo degrees into Webots joint radians.
 
-    The base, shoulder and elbow use 90 degrees as the zero
-    position. The gripper maps 20-90 servo degrees onto
-    0 to +35 Webots degrees: 0 is fully open and larger angles
-    close the finger towards the fixed jaw.
+    Every joint uses 90 degrees as the zero position, because
+    each horn drives its joint 1:1. For the gripper, zero is
+    the jaws touching and a negative angle opens the moving
+    jaw away from the fixed jaw.
     """
-
-    if joint == "gripper":
-        fraction = (
-            (servo_degrees - LIMITS["gripper"][0])
-            / (LIMITS["gripper"][1] - LIMITS["gripper"][0])
-        )
-
-        return radians(35.0 * fraction)
 
     return radians(servo_degrees - 90.0)
 
@@ -216,7 +210,7 @@ def go(target, duration_ms, pause_ms=0):
 def test_servos():
     print("Testing all joints (X = stop)")
 
-    offsets = {"base": 20, "shoulder": 20, "elbow": 20, "gripper": 40}
+    offsets = {"base": 20, "shoulder": 20, "elbow": 20, "gripper": 15}
 
     for joint in JOINTS:
         print("Testing", joint)

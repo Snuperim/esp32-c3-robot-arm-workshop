@@ -13,8 +13,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.826125 0.342192 0.447685 1.493165
-  position 0.65 -0.65 0.50
+  orientation 0.028731429522594283 0.03187838710398901 0.9990787123111153 4.81522218065791
+  position 0.05 0.9 0.17
 }
 TexturedBackground {
 }
@@ -46,9 +46,9 @@ Robot {
       scale 0.001 0.001 0.001
       children [
         Shape {
-          appearance DEF WHITE_APPEARANCE PBRAppearance {
-            baseColor 0.9 0.9 0.92
-            roughness 0.6
+          appearance DEF PRINTED_APPEARANCE PBRAppearance {
+            baseColor 0.6 0.61 0.63
+            roughness 0.7
             metalness 0
           }
           geometry Mesh {
@@ -99,7 +99,7 @@ Robot {
             scale 0.001 0.001 0.001
             children [
               Shape {
-                appearance USE WHITE_APPEARANCE
+                appearance USE PRINTED_APPEARANCE
                 geometry Mesh {
                   url [
                     "../meshes/turntable.stl"
@@ -144,11 +144,7 @@ Robot {
                   scale 0.001 0.001 0.001
                   children [
                     Shape {
-                      appearance DEF ARM_APPEARANCE PBRAppearance {
-                        baseColor 0.75 0.1 0.1
-                        roughness 0.35
-                        metalness 0
-                      }
+                      appearance USE PRINTED_APPEARANCE
                       geometry Mesh {
                         url [
                           "../meshes/upper_arm.stl"
@@ -193,7 +189,7 @@ Robot {
                         scale 0.001 0.001 0.001
                         children [
                           Shape {
-                            appearance USE ARM_APPEARANCE
+                            appearance USE PRINTED_APPEARANCE
                             geometry Mesh {
                               url [
                                 "../meshes/forearm.stl"
@@ -214,16 +210,16 @@ Robot {
                         jointParameters HingeJointParameters {
                           axis 0 1 0
                           anchor 0.11 0 0
-                          minStop 0
-                          maxStop 0.610865
+                          minStop -1.0472
+                          maxStop 0
                           dampingConstant 0.04
                         }
                         device [
                           RotationalMotor {
                             name "gripper_motor"
                             maxVelocity 3
-                            minPosition 0
-                            maxPosition 0.610865
+                            minPosition -1.0472
+                            maxPosition 0
                             maxTorque 0.5
                           }
                           PositionSensor {
@@ -238,7 +234,7 @@ Robot {
                               scale 0.001 0.001 0.001
                               children [
                                 Shape {
-                                  appearance USE ARM_APPEARANCE
+                                  appearance USE PRINTED_APPEARANCE
                                   geometry Mesh {
                                     url [
                                       "../meshes/finger.stl"
@@ -252,18 +248,19 @@ Robot {
                           boundingObject Group {
                             children [
                               Pose {
-                                translation 0.0215 0.08315 0
+                                translation 0.028 0.08315 0
                                 children [
                                   Box {
-                                    size 0.067 0.005 0.016
+                                    size 0.056 0.005 0.008
                                   }
                                 ]
                               }
                               Pose {
-                                translation 0.051 0.08315 -0.0155
+                                translation 0 0.08315 0
                                 children [
-                                  Box {
-                                    size 0.014 0.005 0.047
+                                  Cylinder {
+                                    height 0.005
+                                    radius 0.012
                                   }
                                 ]
                               }
@@ -280,18 +277,18 @@ Robot {
                     boundingObject Group {
                       children [
                         Pose {
-                          translation 0.055 0.0548 0
+                          translation 0.057 0.0548 0
                           children [
                             Box {
-                              size 0.138 0.0507 0.028
+                              size 0.142 0.0507 0.028
                             }
                           ]
                         }
                         Pose {
-                          translation 0.109 0.08165 -0.0275
+                          translation 0.141 0.08165 -0.0084
                           children [
                             Box {
-                              size 0.008 0.008 0.029
+                              size 0.05 0.008 0.008
                             }
                           ]
                         }

@@ -21,7 +21,7 @@ By the end of the workshop, participants should be able to:
 - one regulated 5 V servo supply with adequate current capacity;
 - USB cable for the ESP32-C3;
 - jumper wires and a shared-ground connection;
-- the 3D-printed arm parts (base plate, turntable, upper-arm and forearm housings, finger) and the four MG996R servos with their horns and fasteners;
+- the 3D-printed arm parts (base plate, turntable, upper-arm and forearm housings, moving jaw) and the four MG996R servos with their horns and fasteners;
 - one lightweight object for the pick-and-place activity; and
 - a computer with VS Code, PlatformIO IDE, Wokwi, and the required CAD software installed.
 
@@ -91,7 +91,9 @@ Start at `HOME` (all joints at 90°). Select one joint with `b`, `s`, `e`, or `g
 
 Two other values live in the same table. If a servo turns the wrong way for how it is mounted, set `invert` to `true`. If a horn was fitted a few degrees off, use `trim` rather than editing every pose.
 
-Type `x` at any time to stop a movement. The `t` command moves each joint ±20° (±40° for the gripper) around its current position and honours the limits.
+Type `x` at any time to stop a movement. The `t` command moves each joint ±20° (±15° for the gripper) around its current position and honours the limits.
+
+The gripper is one servo that swings a straight moving jaw towards a fixed jaw. At 90° the jaws touch, so keep its maximum below that (the starting limit is 88°) until you have checked the gap on your own arm. Smaller angles open the jaw; calibrate the open and grip angles with a real object between the jaws.
 
 The servo pulse range (`SERVO_MIN_US` / `SERVO_MAX_US`) starts at a conservative 1000–2000 µs. Check it against your servos after wiring and change it only if a joint cannot reach its full range; recalibrate the limits afterwards.
 

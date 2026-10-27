@@ -226,7 +226,9 @@ The movement code uses blocking delays to keep it approachable for a workshop. T
 
 ## Pick-and-place poses
 
-The poses are worked out for an object on the table about 110 mm in front of the base axis, with the table at the very bottom of the arm base (height 0). The shoulder axis is 87.5 mm above the table, so the arm has to lean well forward to reach it: at the pick position the shoulder is near 135° and the elbow near 112°.
+The poses are worked out for an object on the table about 110 mm in front of the base axis, with the table at the very bottom of the arm base (height 0). The shoulder axis is 87.5 mm above the table, so the arm has to lean well forward to reach it: at the pick position the shoulder is near 132° and the elbow near 124°.
+
+The end effector is one servo with two straight jaws, like tweezers: a fixed jaw on the forearm and a moving jaw on the servo horn, driven 1:1. At gripper angle 90° the jaws touch and a smaller angle opens the moving jaw (40° is about 50° open, wide enough for a 25 mm object). The `GRAB` angle of 58° closes on a 25 mm object, so tune it for your own.
 
 To plan a different position, run:
 

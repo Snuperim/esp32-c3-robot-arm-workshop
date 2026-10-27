@@ -152,7 +152,7 @@ That is correct for the 3D-printed arm. At servo 90° the upper arm is vertical 
 
 ## The arm does not reach the object on the table
 
-The shoulder axis is about 87.5 mm above the table, so reaching a table object needs the shoulder near 135° and the elbow near 112°. Work out poses for your object position with:
+The shoulder axis is about 87.5 mm above the table, so reaching a table object needs the shoulder near 132° and the elbow near 124°. Work out poses for your object position with:
 
 ```powershell
 python tools/arm_poses.py --reach 110 --pick-height 8

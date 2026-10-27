@@ -10,7 +10,8 @@ Usage:
     python tools/arm_poses.py --reach 140 --pick-height 20
 
 Servo angle 90 = neutral (upper arm vertical, forearm horizontal), and a
-larger angle leans the joint forward / folds the forearm down.
+larger angle leans the joint forward / folds the forearm down. For the
+gripper, 90 = jaws touching and smaller angles open the jaw.
 Dimensions come from the Fusion model; update them if the CAD changes.
 """
 import argparse
@@ -19,11 +20,14 @@ import math
 SHOULDER_HEIGHT = 87.5      # mm, shoulder axis above the table
 UPPER_ARM = 118.0           # mm, shoulder axis -> elbow axis
 FOREARM = 110.0             # mm, elbow axis -> gripper axis
-FINGER_TIP = (FOREARM + 51.0, -39.0)    # lowest point of the finger hook, from the elbow axis
-# Forearm plates plus the fixed jaw (hangs 42 mm below the gripper axis).
+# Two straight jaws point forward along the forearm, so the tip that reaches the
+# object is the end of the fixed (lower) jaw, measured from the elbow axis.
+FINGER_TIP = (FOREARM + 56.0, -8.4)
+# Forearm plates plus both jaws (moving jaw shown closed).
 FOREARM_OUTLINE = [
-    (0, -14), (0, 14), (128, -14), (128, 14), (FOREARM + 58, 8),
-    (FOREARM - 5, -42), (FOREARM + 3, -42),
+    (0, -14), (0, 14), (128, -14), (128, 14),
+    (FOREARM + 13, -12.4), (FOREARM + 52, -12.4), (FOREARM + 56, -8.4),
+    (FOREARM + 56, 0), (FOREARM + 52, 4),
 ]
 MIN_CLEARANCE = 3.0         # mm, keep every forearm point this far above the table
 SERVO_LIMITS = (30, 150)    # same as the firmware limits
@@ -67,12 +71,14 @@ def solve(reach, height, near=None, tolerance=4.0):
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--reach", type=float, default=110.0, help="tip distance from base axis, mm")
-    p.add_argument("--pick-height", type=float, default=8.0, help="tip height at the object, mm")
+    p.add_argument("--pick-height", type=float, default=12.0, help="jaw-tip height at the object, mm")
     p.add_argument("--approach-height", type=float, default=70.0, help="tip height while travelling, mm")
     p.add_argument("--base-pick", type=int, default=45)
     p.add_argument("--base-place", type=int, default=135)
-    p.add_argument("--gripper-open", type=int, default=30)
-    p.add_argument("--gripper-closed", type=int, default=75)
+    p.add_argument("--gripper-open", type=int, default=40,
+                   help="servo angle with the jaw open (about 50 degrees of opening)")
+    p.add_argument("--gripper-closed", type=int, default=58,
+                   help="servo angle that grips the object (90 = jaws touching)")
     a = p.parse_args()
 
     low = solve(a.reach, a.pick_height)

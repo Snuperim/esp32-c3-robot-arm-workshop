@@ -267,7 +267,7 @@ Robot {
                                 translation 0.028 0.08315 0
                                 children [
                                   Box {
-                                    size 0.056 0.005 0.008
+                                    size 0.056 0.012 0.014
                                   }
                                 ]
                               }
@@ -275,7 +275,7 @@ Robot {
                                 translation 0 0.08315 0
                                 children [
                                   Cylinder {
-                                    height 0.005
+                                    height 0.012
                                     radius 0.012
                                   }
                                 ]
@@ -284,7 +284,7 @@ Robot {
                           }
                           physics Physics {
                             density -1
-                            mass 0.08
+                            mass 0.1
                           }
                         }
                       }

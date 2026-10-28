@@ -21,9 +21,25 @@ By the end of the workshop, participants should be able to:
 - one regulated 5 V servo supply with adequate current capacity;
 - USB cable for the ESP32-C3;
 - jumper wires and a shared-ground connection;
-- the 3D-printed arm parts (base plate, turntable, upper-arm and forearm housings, moving jaw) and the four MG996R servos with their horns and fasteners;
+- the seven 3D-printed arm parts (base plate, turntable, upper-arm plate and frame, forearm frame, forearm outer plate with the fixed jaw, and the moving jaw), the four MG996R servos with their horns and fasteners, and six M3×12 screws to join each outer plate to its frame;
 - one lightweight object for the pick-and-place activity; and
 - a computer with VS Code, PlatformIO IDE, Wokwi, and the required CAD software installed.
+
+## Printing the parts
+
+The upper arm and forearm are each split into two pieces so every part prints flat without supports. Orient them like this:
+
+| Part | Print it like this |
+| --- | --- |
+| Upper-arm plate A | outer face down (a flat plate) |
+| Upper-arm frame | the plate with the engraved rings down; the back web and three screw posts point up |
+| Forearm frame | outer face down; the back web and three screw posts point up |
+| Forearm outer plate with the fixed jaw | the flat inner face down; the jaw points up |
+| Base plate | the round plate on the bed with the feet pointing up |
+| Turntable | disc down |
+| Moving jaw | either face down |
+
+Each outer plate is screwed to its frame through three posts with M3×12 screws. The plate holes are 3.2 mm and the pilot holes in the posts are 2.6 mm, so the screws cut their own thread. The forearm outer plate is 180 mm long, so on a 180 mm bed it must go diagonally. The servo pockets leave 0.3 mm clearance; print one link first and test-fit a servo before printing the rest.
 
 ## Preparation before the session
 

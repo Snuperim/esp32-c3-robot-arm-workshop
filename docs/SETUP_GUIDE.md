@@ -177,7 +177,7 @@ Verify the simulation clock is advancing, click the 3D view rather than the cons
 
 ### The arm or some parts are missing
 
-The world loads its parts from `webots/meshes/*.stl`. Check that all nine files are present in that folder after cloning.
+The world loads its parts from `webots/meshes/*.stl`. Check that all eleven files are present in that folder after cloning.
 
 ### Webots does not open from a background or hidden shell
 
@@ -203,7 +203,7 @@ git diff
 A complete change set for the current version includes:
 
 - `src/main.cpp`, `webots/worlds/robot_arm.wbt`, and `webots/controllers/arm_controller/arm_controller.py`;
-- the nine new files in `webots/meshes/` and the new `tools/arm_poses.py`;
+- the eleven files in `webots/meshes/` (the upper arm and forearm are now split into two pieces each, so `upper_arm.stl` and `forearm.stl` are removed) and the new `tools/arm_poses.py`;
 - the updated `README.md` and the three guides under `docs/`.
 
 `webots/worlds/.robot_arm.wbproj` only stores the Webots window layout. Commit it only if you want that layout shared; otherwise run `git restore webots/worlds/.robot_arm.wbproj` before committing.

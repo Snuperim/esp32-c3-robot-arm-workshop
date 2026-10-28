@@ -147,7 +147,15 @@ Robot {
                       appearance USE PRINTED_APPEARANCE
                       geometry Mesh {
                         url [
-                          "../meshes/upper_arm.stl"
+                          "../meshes/upper_arm_plate_a.stl"
+                        ]
+                      }
+                    }
+                    Shape {
+                      appearance USE PRINTED_APPEARANCE
+                      geometry Mesh {
+                        url [
+                          "../meshes/upper_arm_frame.stl"
                         ]
                       }
                     }
@@ -192,7 +200,15 @@ Robot {
                             appearance USE PRINTED_APPEARANCE
                             geometry Mesh {
                               url [
-                                "../meshes/forearm.stl"
+                                "../meshes/forearm_frame.stl"
+                              ]
+                            }
+                          }
+                          Shape {
+                            appearance USE PRINTED_APPEARANCE
+                            geometry Mesh {
+                              url [
+                                "../meshes/forearm_outer.stl"
                               ]
                             }
                           }

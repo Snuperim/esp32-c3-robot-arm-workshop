@@ -170,4 +170,4 @@ The firmware uses a conservative 1000–2000 µs pulse range. After wiring, chec
 
 ## Webots shows no arm, or parts are missing
 
-The world loads its parts from `webots/meshes/*.stl` using paths relative to the world file. Check that all nine files exist there and that the repository was cloned complete.
+The world loads its parts from `webots/meshes/*.stl` using paths relative to the world file. Check that all eleven files exist there and that the repository was cloned complete.

@@ -8,17 +8,23 @@ Every chapter has the same three parts:
 - **Do** is a short list of steps. Each one ends with what you should see. If you do not see it, stop and check before moving on.
 - **Try your own change** is one small experiment. Pick one, make the change yourself, and predict the result before you run it. This is how you start working beyond the guide.
 
+Some chapters also end with an **AI moment**, a short exercise that uses an AI assistant. The time is part of the chapter. If you are running late, skip it.
+
 By the end you should be able to:
 
 - name the power, ground and signal wires of a servo and explain why the servos need their own supply;
 - describe how links, joints, actuators and poses fit together;
 - test ESP32-C3 servo code in Wokwi before you touch hardware;
 - control one joint at a time by angle, and set safe limits for it;
-- combine poses into a pick-and-place sequence, and change it yourself.
+- combine poses into a pick-and-place sequence, and change it yourself;
+- commit your calibrated settings to your own GitHub branch;
+- use an AI assistant to debug and to explain code, while you check its answers and stay in control of the hardware.
 
 ## Before you start
 
-Complete the [pre-workshop setup](PRE_WORKSHOP.md) first. It takes 30 to 45 minutes and ends with the virtual arm running on your own computer.
+Complete the [pre-workshop setup](PRE_WORKSHOP.md) first. It takes 45 to 60 minutes. It ends with the virtual arm running on your own computer and a branch pushed to your own copy of the project.
+
+Read [AI_WORKFLOW.md](AI_WORKFLOW.md) once before the session. The **AI moment** boxes build on it.
 
 **Software you need**
 
@@ -43,7 +49,7 @@ The full install steps are in [SETUP_GUIDE.md](SETUP_GUIDE.md). If something bre
 | --- | --- | ---: |
 | 0 | Meet the arm | 10 |
 | 1 | Joints, links and poses | 15 |
-| 2 | Inspect and assemble the arm | 35 |
+| 2 | Inspect and assemble the arm | 30 |
 | | Break | 10 |
 | 3 | Build and simulate in Wokwi | 20 |
 | 4 | How a servo is controlled | 15 |
@@ -51,7 +57,7 @@ The full install steps are in [SETUP_GUIDE.md](SETUP_GUIDE.md). If something bre
 | 6 | Calibrate one joint at a time | 20 |
 | 7 | Poses and smooth motion | 20 |
 | 8 | Pick-and-place challenge | 15 |
-| 9 | Wrap-up and what next | 5 |
+| 9 | Wrap-up, Git and what next | 10 |
 
 ## Chapter 0: Meet the arm (10 min)
 
@@ -100,7 +106,7 @@ You should end up with four joints, four servos and a clear picture of which par
 
 The upper arm is 118 mm long and the forearm is 110 mm. Predict the longest horizontal distance the tip can reach when both are stretched out flat, then check it against Chapter 7.
 
-## Chapter 2: Inspect and assemble the arm (35 min)
+## Chapter 2: Inspect and assemble the arm (30 min)
 
 ### Explain
 
@@ -110,7 +116,7 @@ The upper arm and forearm are each split into two printed pieces, a frame and an
 
 ### Do
 
-1. Spend 15 minutes inspecting the parts or the CAD model. Find the screw posts, the horn screw holes and the pedestal under the elbow servo.
+1. Spend 10 minutes inspecting the parts or the CAD model. Find the screw posts, the horn screw holes and the pedestal under the elbow servo.
 2. Assemble the arm from the base up: base plate and base servo, turntable on the base servo horn, shoulder servo in the tray, then the upper arm, the elbow servo, the forearm, the gripper servo and the jaws.
 3. Join each outer plate to its frame with three M3×12 screws.
 4. Check clearances by eye. For each joint, picture it moving through its range and look for parts that would rub or hit the table. You will test real movement in Chapter 6.
@@ -146,6 +152,10 @@ Wokwi runs the compiled file, so after any code change you must build again and 
 ### Try your own change
 
 Edit one pose in `src/main.cpp`, for example change the base angle of `PICK_APPROACH` from 45 to 60. Rebuild, restart Wokwi, run `p`, and watch which servo behaves differently.
+
+> **AI moment (3 min)**
+>
+> Break the build on purpose: delete one semicolon in `src/main.cpp` and build. Copy the error into your assistant using the template in [AI_WORKFLOW.md](AI_WORKFLOW.md) and ask for the cause. Fix it yourself, rebuild, then run `git diff` to confirm only that one line changed. Undo anything left over with `git restore src/main.cpp`.
 
 ## Chapter 4: How a servo is controlled (15 min)
 
@@ -188,6 +198,10 @@ Then add this case in `loop()`, next to the other commands:
 
 Rebuild, restart Wokwi and type `w`. Then change the numbers to make a different gesture.
 
+> **AI moment (3 min)**
+>
+> Before you copy the `w` command above, ask your assistant to write it. Compare its answer with the guide's version. Which parts match, and which would not compile or would break a joint limit? Run only the version you can explain.
+
 ## Chapter 5: Wire it safely (15 min)
 
 ### Explain
@@ -224,6 +238,10 @@ If a joint stalls, vibrates, hits a stop or gets hot, switch the servo supply of
 ### Try your own change
 
 Draw the wiring diagram from memory, then compare it with `diagram.json`. Then plan a way to cut servo power quickly in an emergency, such as a switch in the supply line, and add it to your drawing.
+
+> **AI moment (3 min)**
+>
+> Ask your assistant for a checklist to run before powering four servos from an ESP32-C3. Compare it with this chapter and with `diagram.json`. Did it mention a separate supply and a shared ground? Add anything useful that is missing here, and cross out anything that is wrong. It cannot see your wires, so the checking is yours.
 
 ## Chapter 6: Calibrate one joint at a time (20 min)
 
@@ -280,6 +298,10 @@ You should be able to run `p` with an empty table and see the jaw reach the pick
 
 Move the object. Run `python tools/arm_poses.py --reach 140 --pick-height 20`, paste the new lines into the code, and test. Or turn on `EASED_MOTION` and compare how the two kinds of motion feel.
 
+> **AI moment (3 min)**
+>
+> Cause a fault: set the shoulder angle of `PICK` to 100 and run `p` in Wokwi. Fill in the debugging template from [AI_WORKFLOW.md](AI_WORKFLOW.md) and ask for three likely causes. Test each one yourself, using `python tools/arm_poses.py` to check where the jaw tip lands, then put the value back.
+
 ## Chapter 8: Pick-and-place challenge (15 min)
 
 ### Explain
@@ -298,7 +320,11 @@ You should see the arm pick up the object and set it down at the drop spot.
 
 Move the drop location, or build your own sequence: pick from one spot, place at another, then return home. Time your best run.
 
-## Chapter 9: Wrap-up and what next (5 min)
+> **AI moment (2 min)**
+>
+> If a grab fails, describe it with the debugging template: the expected result, what happened, and which pose it happened in. Ask for causes and tests, not a fix. Change one value at a time and note what each change did.
+
+## Chapter 9: Wrap-up, Git and what next (10 min)
 
 ### Explain
 
@@ -309,7 +335,19 @@ Look back at what you built: a mechanical design, a circuit, a controller and a 
 1. Return the arm to `HOME` and switch off servo power before changing any wiring.
 2. Write down the calibrated limits for your arm.
 3. Check that both PlatformIO environments still build before you share your changes.
-4. Commit working pose changes on a separate branch, or keep a configuration per arm.
+4. Commit your calibration on your own branch. If you already made `my-arm` in the pre-workshop setup, run `git switch my-arm`. Otherwise run `git switch -c my-arm`. Then:
+
+```text
+git add src/main.cpp
+git commit -m "Set calibrated limits for my arm"
+git push -u origin my-arm
+```
+
+You should see your commit on the `my-arm` branch of your fork on GitHub.
+
+> **AI moment (3 min)**
+>
+> Run `git diff --staged` before you commit and ask your assistant to summarise the diff as a commit message. Edit it until it is short, accurate and in your own words. Check that it does not claim anything the diff does not show.
 
 ### Try your own change
 

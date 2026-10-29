@@ -6,7 +6,7 @@ The arm currently supports a home position, an individual servo test, and a comp
 
 ## Start here
 
-Joining the workshop? Do the **[pre-workshop setup](docs/PRE_WORKSHOP.md)** first, then follow the **[workshop guide](docs/WORKSHOP_GUIDE.md)**.
+Joining the workshop? Do the **[pre-workshop setup](docs/PRE_WORKSHOP.md)** first, then follow the **[workshop guide](docs/WORKSHOP_GUIDE.md)**. The workshop also covers using an AI assistant safely for debugging and Git: see the **[AI workflow guide](docs/AI_WORKFLOW.md)**.
 
 For installation, Webots controls, Wokwi setup, physical-arm safety, troubleshooting, and GitHub push commands, follow the **[complete setup guide](docs/SETUP_GUIDE.md)**.
 

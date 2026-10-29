@@ -18,6 +18,8 @@ By the end you should be able to:
 
 ## Before you start
 
+Complete the [pre-workshop setup](PRE_WORKSHOP.md) first. It takes 30 to 45 minutes and ends with the virtual arm running on your own computer.
+
 **Software you need**
 
 - Visual Studio Code with the PlatformIO IDE extension and the Wokwi for VS Code extension.

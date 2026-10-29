@@ -6,6 +6,8 @@ The arm currently supports a home position, an individual servo test, and a comp
 
 ## Start here
 
+Joining the workshop? Do the **[pre-workshop setup](docs/PRE_WORKSHOP.md)** first, then follow the **[workshop guide](docs/WORKSHOP_GUIDE.md)**.
+
 For installation, Webots controls, Wokwi setup, physical-arm safety, troubleshooting, and GitHub push commands, follow the **[complete setup guide](docs/SETUP_GUIDE.md)**.
 
 ### Webots 3D simulation
